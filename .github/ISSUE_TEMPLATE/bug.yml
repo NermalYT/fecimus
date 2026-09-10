@@ -1,0 +1,60 @@
+name: Bug report
+description: Report a reproducible Fecimus failure.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use SECURITY.md for vulnerabilities. Remove credentials, private paths, session cookies, screenshots of personal data, and page content before sharing diagnostics.
+  - type: input
+    id: version
+    attributes:
+      label: Fecimus version or commit
+      placeholder: Release tag or git commit hash
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Ubuntu LTS
+        - Linux Mint XFCE / other Ubuntu LTS based distribution
+        - Windows 11 Pro with WSL2 Ubuntu LTS
+        - Other (outside the current platform targets)
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment versions
+      description: Include exact OS release, Node.js version, and WSL distribution/version where applicable.
+    validations:
+      required: true
+  - type: input
+    id: host_model
+    attributes:
+      label: MCP host and model
+      description: Include host/runtime version, exact model repository or filename, quantization, context length, and template overrides if relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Give minimal steps with a public page or disposable local fixture. Include the tool name and sanitized arguments when relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and actual behavior
+      description: Include the exact error and whether the action completed, failed, or has an uncertain outcome.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Sanitized diagnostics
+      description: Paste relevant fecimus_status output and short logs. Do not upload browser profiles, cookies, private configuration, or full browsing dumps.
+      render: text

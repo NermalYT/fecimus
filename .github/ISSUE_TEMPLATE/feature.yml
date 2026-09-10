@@ -1,0 +1,28 @@
+name: Feature request
+description: Propose a focused improvement to Fecimus.
+title: "[Feature]: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: User problem
+      description: Describe what you are trying to accomplish and what currently prevents it.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Explain the desired result, with an example when useful.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Platform and model context
+      description: Include relevant OS, MCP host, and model details. The platform targets are Ubuntu LTS based systems and Windows 11 Pro through WSL2 Ubuntu LTS.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives or tradeoffs
+      description: Mention existing workarounds, dependencies, or effects on simultaneous human and AI use.
