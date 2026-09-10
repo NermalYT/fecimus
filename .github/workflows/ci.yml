@@ -4,9 +4,13 @@ on:
   pull_request:
 permissions:
   contents: read
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   unit:
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-latest]
         node: [22, 24]
@@ -19,6 +23,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run test:unit
+      - name: Verify both release archive formats
+        run: python scripts/package-release.py --self-test
       - name: Parse Windows installer
         if: runner.os == 'Windows'
         shell: powershell
@@ -45,3 +51,7 @@ jobs:
       - run: npm run test:integration
         env:
           FECIMUS_DATA_DIR: ${{ runner.temp }}/fecimus-test-data
+      - name: Build and verify Linux and Windows packages
+        run: python3 scripts/package-release.py --output-dir dist
+      - name: Build and verify standalone source installer
+        run: python3 scripts/build-installer.py --output dist/install-fecimus.py
