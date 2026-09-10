@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { waitForWindowManager } from '../src/runtime.mjs';
 import { observeUntil, launchAndObserve, screenshotTransform, movementCommands } from '../src/desktop-workflow.mjs';
 
 test('readiness returns immediately, waits only for changes, and is bounded', async () => {
@@ -60,4 +61,27 @@ test('one pointer connection has an exact endpoint and preserves bounded animati
   assert.equal(commands.filter(value => value === 'mousemove').length, 60);
   assert.deepEqual(commands.slice(-3), ['mousemove', '420', '80']);
   assert(!commands.includes('--sync'));
+});
+
+
+
+const running = { exitCode: null, signalCode: null };
+test('window-manager readiness requires a nonzero EWMH window and tolerates output formatting', async () => {
+  for (const value of ['_NET_SUPPORTING_WM_CHECK = 0x400003', '_NET_SUPPORTING_WM_CHECK(WINDOW): window id # 0x400003']) {
+    await waitForWindowManager(running, async () => value, { sleep: async () => assert.fail('ready window should not sleep') });
+  }
+  let clock = 0, reads = 0;
+  await waitForWindowManager(running, async () => ++reads < 3 ? '_NET_SUPPORTING_WM_CHECK = 0x0' : '_NET_SUPPORTING_WM_CHECK = 0x20', { now: () => clock, sleep: async ms => { clock += ms; } });
+  assert.equal(reads, 3);
+  assert.equal(clock, 200);
+});
+
+test('unready and exited window managers fail closed with actionable bounded diagnostics', async () => {
+  let clock = 0;
+  await assert.rejects(waitForWindowManager(running, async () => '_NET_SUPPORTING_WM_CHECK: no such atom on any window.', {
+    timeout: 250, now: () => clock, sleep: async ms => { clock += ms; },
+  }), /timeout after 250 ms; last root property:.*no such atom/);
+  assert.equal(clock, 250);
+  await assert.rejects(waitForWindowManager({ exitCode: 1, signalCode: null }, () => assert.fail('no probe after exit')), /exited \(code 1/);
+  await assert.rejects(waitForWindowManager(running, async () => { throw new Error('xprop access denied'); }), /access denied/);
 });
