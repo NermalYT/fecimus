@@ -1,0 +1,146 @@
+{
+  "date": "2026-09-09",
+  "application": "Blender 4.5.13 LTS",
+  "platform": "Linux Mint 22.3 x64 (Ubuntu 24.04 base)",
+  "download": {
+    "version": "4.5.13 LTS",
+    "archive_url": "https://download.blender.org/release/Blender4.5/blender-4.5.13-linux-x64.tar.xz",
+    "checksum_url": "https://download.blender.org/release/Blender4.5/blender-4.5.13.sha256",
+    "sha256": "da4e69b06b75b9e642d106496c50e7e240218b411d2f6e18271c1d1d819cef91",
+    "download_bytes": 378033952,
+    "download_ms": 8753
+  },
+  "operations": [
+    {
+      "tool": "fecimus_status",
+      "elapsed_ms": 2,
+      "is_error": false
+    },
+    {
+      "tool": "fecimus_job_start",
+      "elapsed_ms": 18,
+      "is_error": false
+    },
+    {
+      "tool": "fecimus_job_status",
+      "elapsed_ms": 1,
+      "is_error": false
+    },
+    {
+      "tool": "fecimus_job_status",
+      "elapsed_ms": 1,
+      "is_error": false
+    },
+    {
+      "tool": "application_launch",
+      "elapsed_ms": 141,
+      "is_error": false
+    },
+    {
+      "tool": "window_list",
+      "elapsed_ms": 6,
+      "is_error": false
+    },
+    {
+      "tool": "desktop_screenshot",
+      "elapsed_ms": 96,
+      "is_error": false
+    },
+    {
+      "tool": "window_close",
+      "elapsed_ms": 4,
+      "is_error": false
+    },
+    {
+      "tool": "window_list",
+      "elapsed_ms": 4,
+      "is_error": false
+    },
+    {
+      "tool": "window_list",
+      "elapsed_ms": 5,
+      "is_error": false
+    },
+    {
+      "tool": "window_list",
+      "elapsed_ms": 5,
+      "is_error": false
+    },
+    {
+      "tool": "window_list",
+      "elapsed_ms": 6,
+      "is_error": false
+    },
+    {
+      "tool": "window_list",
+      "elapsed_ms": 5,
+      "is_error": false
+    },
+    {
+      "tool": "window_list",
+      "elapsed_ms": 5,
+      "is_error": false
+    },
+    {
+      "tool": "window_list",
+      "elapsed_ms": 5,
+      "is_error": false
+    },
+    {
+      "tool": "window_list",
+      "elapsed_ms": 4,
+      "is_error": false
+    }
+  ],
+  "server_start_ms": 2704,
+  "isolated_display": true,
+  "tool_count": 84,
+  "job_start_ms": 18,
+  "render": {
+    "state": "succeeded",
+    "exit_code": 0,
+    "elapsed_ms": 341,
+    "fixture": {
+      "blender": "4.5.13 LTS",
+      "engine": "CYCLES",
+      "device": "CPU",
+      "resolution": [
+        64,
+        64
+      ],
+      "objects": [
+        "Camera",
+        "Cube",
+        "Light"
+      ],
+      "private_home": true
+    },
+    "png_bytes": 4762,
+    "blend_bytes": 435143,
+    "png_sha256": "2b98a84ec9e3e7f84a72aa586827eca35fcb2b11d2590ede7c7be995ded954f4",
+    "blend_sha256": "5457b5f83b74cddf5d2198078ca75040875acd8b899cfda35fc10908cc849631"
+  },
+  "gui": {
+    "is_error": false,
+    "response": {
+      "started": true,
+      "window_observed": true,
+      "readiness": "window_observed"
+    },
+    "windows": [
+      {
+        "title": "fixture.blend - Blender 4.5.13 LTS",
+        "wm_class": "Blender.Blender"
+      }
+    ],
+    "screenshot_saved": true,
+    "closed": true,
+    "visually_verified": true,
+    "graphics_acceleration": "not measured; isolated Xvfb display",
+    "full_interface_observed_after_ms": 10065,
+    "full_interface_note": "A separate Fecimus background job opened the same scene; the 10-second screenshot showed the cube viewport, menus, outliner and properties. Earlier 2-second capture had an unpainted client area.",
+    "cleanup_verified": true,
+    "remaining_blender_processes": 0
+  },
+  "limits": "Disposable factory cube scene, CPU 64x64 Cycles render, GUI open and fully painted screenshot, normal application_launch window closure, and background GUI job cancellation only. Not a production scene benchmark, GPU acceleration test, Unity test or Windows test."
+}

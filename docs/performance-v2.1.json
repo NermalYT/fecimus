@@ -1,0 +1,696 @@
+{
+  "version": "2.1.0",
+  "date": "2026-09-10T02:16:30.604Z",
+  "method": "Sequential disposable MCP integration fixtures; excludes model inference and application rendering performance.",
+  "trials": [
+    {
+      "startup_ms": 2784,
+      "tools": [
+        {
+          "tool": "fecimus_status",
+          "ms": 2
+        },
+        {
+          "tool": "display_size",
+          "ms": 7
+        },
+        {
+          "tool": "shell_run",
+          "ms": 21
+        },
+        {
+          "tool": "filesystem_write_text",
+          "ms": 2
+        },
+        {
+          "tool": "filesystem_read_text",
+          "ms": 1
+        },
+        {
+          "tool": "filesystem_stat",
+          "ms": 1
+        },
+        {
+          "tool": "shell_run",
+          "ms": 34
+        },
+        {
+          "tool": "application_launch",
+          "ms": 68
+        },
+        {
+          "tool": "window_list",
+          "ms": 5
+        },
+        {
+          "tool": "window_focus",
+          "ms": 9
+        },
+        {
+          "tool": "window_geometry",
+          "ms": 4
+        },
+        {
+          "tool": "window_active",
+          "ms": 5
+        },
+        {
+          "tool": "mouse_move",
+          "ms": 12
+        },
+        {
+          "tool": "mouse_position",
+          "ms": 4
+        },
+        {
+          "tool": "mouse_click",
+          "ms": 107
+        },
+        {
+          "tool": "keyboard_type_text",
+          "ms": 14
+        },
+        {
+          "tool": "desktop_screenshot",
+          "ms": 99
+        },
+        {
+          "tool": "mouse_position",
+          "ms": 4
+        },
+        {
+          "tool": "browser_navigate",
+          "ms": 215
+        },
+        {
+          "tool": "browser_type",
+          "ms": 29
+        },
+        {
+          "tool": "browser_snapshot",
+          "ms": 5
+        },
+        {
+          "tool": "browser_click",
+          "ms": 205
+        },
+        {
+          "tool": "browser_snapshot",
+          "ms": 5
+        },
+        {
+          "tool": "browser_take_screenshot",
+          "ms": 86
+        },
+        {
+          "tool": "browser_tabs",
+          "ms": 16
+        },
+        {
+          "tool": "browser_navigate",
+          "ms": 28
+        },
+        {
+          "tool": "browser_read_tabs",
+          "ms": 161
+        },
+        {
+          "tool": "browser_scrape",
+          "ms": 213
+        },
+        {
+          "tool": "browser_read_tabs",
+          "ms": 159
+        },
+        {
+          "tool": "window_close",
+          "ms": 5
+        },
+        {
+          "tool": "browser_close",
+          "ms": 54
+        }
+      ]
+    },
+    {
+      "startup_ms": 552,
+      "tools": [
+        {
+          "tool": "fecimus_status",
+          "ms": 2
+        },
+        {
+          "tool": "display_size",
+          "ms": 7
+        },
+        {
+          "tool": "shell_run",
+          "ms": 22
+        },
+        {
+          "tool": "filesystem_write_text",
+          "ms": 1
+        },
+        {
+          "tool": "filesystem_read_text",
+          "ms": 1
+        },
+        {
+          "tool": "filesystem_stat",
+          "ms": 1
+        },
+        {
+          "tool": "shell_run",
+          "ms": 36
+        },
+        {
+          "tool": "application_launch",
+          "ms": 69
+        },
+        {
+          "tool": "window_list",
+          "ms": 4
+        },
+        {
+          "tool": "window_focus",
+          "ms": 9
+        },
+        {
+          "tool": "window_geometry",
+          "ms": 4
+        },
+        {
+          "tool": "window_active",
+          "ms": 5
+        },
+        {
+          "tool": "mouse_move",
+          "ms": 13
+        },
+        {
+          "tool": "mouse_position",
+          "ms": 4
+        },
+        {
+          "tool": "mouse_click",
+          "ms": 108
+        },
+        {
+          "tool": "keyboard_type_text",
+          "ms": 17
+        },
+        {
+          "tool": "desktop_screenshot",
+          "ms": 105
+        },
+        {
+          "tool": "mouse_position",
+          "ms": 4
+        },
+        {
+          "tool": "browser_navigate",
+          "ms": 195
+        },
+        {
+          "tool": "browser_type",
+          "ms": 28
+        },
+        {
+          "tool": "browser_snapshot",
+          "ms": 5
+        },
+        {
+          "tool": "browser_click",
+          "ms": 200
+        },
+        {
+          "tool": "browser_snapshot",
+          "ms": 5
+        },
+        {
+          "tool": "browser_take_screenshot",
+          "ms": 83
+        },
+        {
+          "tool": "browser_tabs",
+          "ms": 17
+        },
+        {
+          "tool": "browser_navigate",
+          "ms": 27
+        },
+        {
+          "tool": "browser_read_tabs",
+          "ms": 160
+        },
+        {
+          "tool": "browser_scrape",
+          "ms": 221
+        },
+        {
+          "tool": "browser_read_tabs",
+          "ms": 158
+        },
+        {
+          "tool": "window_close",
+          "ms": 4
+        },
+        {
+          "tool": "browser_close",
+          "ms": 55
+        }
+      ]
+    },
+    {
+      "startup_ms": 576,
+      "tools": [
+        {
+          "tool": "fecimus_status",
+          "ms": 2
+        },
+        {
+          "tool": "display_size",
+          "ms": 7
+        },
+        {
+          "tool": "shell_run",
+          "ms": 17
+        },
+        {
+          "tool": "filesystem_write_text",
+          "ms": 2
+        },
+        {
+          "tool": "filesystem_read_text",
+          "ms": 1
+        },
+        {
+          "tool": "filesystem_stat",
+          "ms": 1
+        },
+        {
+          "tool": "shell_run",
+          "ms": 32
+        },
+        {
+          "tool": "application_launch",
+          "ms": 70
+        },
+        {
+          "tool": "window_list",
+          "ms": 4
+        },
+        {
+          "tool": "window_focus",
+          "ms": 8
+        },
+        {
+          "tool": "window_geometry",
+          "ms": 4
+        },
+        {
+          "tool": "window_active",
+          "ms": 5
+        },
+        {
+          "tool": "mouse_move",
+          "ms": 13
+        },
+        {
+          "tool": "mouse_position",
+          "ms": 4
+        },
+        {
+          "tool": "mouse_click",
+          "ms": 108
+        },
+        {
+          "tool": "keyboard_type_text",
+          "ms": 16
+        },
+        {
+          "tool": "desktop_screenshot",
+          "ms": 103
+        },
+        {
+          "tool": "mouse_position",
+          "ms": 4
+        },
+        {
+          "tool": "browser_navigate",
+          "ms": 218
+        },
+        {
+          "tool": "browser_type",
+          "ms": 25
+        },
+        {
+          "tool": "browser_snapshot",
+          "ms": 5
+        },
+        {
+          "tool": "browser_click",
+          "ms": 201
+        },
+        {
+          "tool": "browser_snapshot",
+          "ms": 6
+        },
+        {
+          "tool": "browser_take_screenshot",
+          "ms": 85
+        },
+        {
+          "tool": "browser_tabs",
+          "ms": 21
+        },
+        {
+          "tool": "browser_navigate",
+          "ms": 52
+        },
+        {
+          "tool": "browser_read_tabs",
+          "ms": 165
+        },
+        {
+          "tool": "browser_scrape",
+          "ms": 220
+        },
+        {
+          "tool": "browser_read_tabs",
+          "ms": 160
+        },
+        {
+          "tool": "window_close",
+          "ms": 5
+        },
+        {
+          "tool": "browser_close",
+          "ms": 51
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "startup_ms": {
+      "median_ms": 576,
+      "min_ms": 552,
+      "max_ms": 2784,
+      "samples": 3
+    },
+    "fecimus_status": {
+      "median_ms": 2,
+      "min_ms": 2,
+      "max_ms": 2,
+      "samples": 3
+    },
+    "display_size": {
+      "median_ms": 7,
+      "min_ms": 7,
+      "max_ms": 7,
+      "samples": 3
+    },
+    "shell_run": {
+      "median_ms": 27,
+      "min_ms": 17,
+      "max_ms": 36,
+      "samples": 6
+    },
+    "filesystem_write_text": {
+      "median_ms": 2,
+      "min_ms": 1,
+      "max_ms": 2,
+      "samples": 3
+    },
+    "filesystem_read_text": {
+      "median_ms": 1,
+      "min_ms": 1,
+      "max_ms": 1,
+      "samples": 3
+    },
+    "filesystem_stat": {
+      "median_ms": 1,
+      "min_ms": 1,
+      "max_ms": 1,
+      "samples": 3
+    },
+    "application_launch": {
+      "median_ms": 69,
+      "min_ms": 68,
+      "max_ms": 70,
+      "samples": 3
+    },
+    "window_list": {
+      "median_ms": 4,
+      "min_ms": 4,
+      "max_ms": 5,
+      "samples": 3
+    },
+    "window_focus": {
+      "median_ms": 9,
+      "min_ms": 8,
+      "max_ms": 9,
+      "samples": 3
+    },
+    "window_geometry": {
+      "median_ms": 4,
+      "min_ms": 4,
+      "max_ms": 4,
+      "samples": 3
+    },
+    "window_active": {
+      "median_ms": 5,
+      "min_ms": 5,
+      "max_ms": 5,
+      "samples": 3
+    },
+    "mouse_move": {
+      "median_ms": 13,
+      "min_ms": 12,
+      "max_ms": 13,
+      "samples": 3
+    },
+    "mouse_position": {
+      "median_ms": 4,
+      "min_ms": 4,
+      "max_ms": 4,
+      "samples": 6
+    },
+    "mouse_click": {
+      "median_ms": 108,
+      "min_ms": 107,
+      "max_ms": 108,
+      "samples": 3
+    },
+    "keyboard_type_text": {
+      "median_ms": 16,
+      "min_ms": 14,
+      "max_ms": 17,
+      "samples": 3
+    },
+    "desktop_screenshot": {
+      "median_ms": 103,
+      "min_ms": 99,
+      "max_ms": 105,
+      "samples": 3
+    },
+    "browser_navigate": {
+      "median_ms": 123.5,
+      "min_ms": 27,
+      "max_ms": 218,
+      "samples": 6
+    },
+    "browser_type": {
+      "median_ms": 28,
+      "min_ms": 25,
+      "max_ms": 29,
+      "samples": 3
+    },
+    "browser_snapshot": {
+      "median_ms": 5,
+      "min_ms": 5,
+      "max_ms": 6,
+      "samples": 6
+    },
+    "browser_click": {
+      "median_ms": 201,
+      "min_ms": 200,
+      "max_ms": 205,
+      "samples": 3
+    },
+    "browser_take_screenshot": {
+      "median_ms": 85,
+      "min_ms": 83,
+      "max_ms": 86,
+      "samples": 3
+    },
+    "browser_tabs": {
+      "median_ms": 17,
+      "min_ms": 16,
+      "max_ms": 21,
+      "samples": 3
+    },
+    "browser_read_tabs": {
+      "median_ms": 160,
+      "min_ms": 158,
+      "max_ms": 165,
+      "samples": 6
+    },
+    "browser_scrape": {
+      "median_ms": 220,
+      "min_ms": 213,
+      "max_ms": 221,
+      "samples": 3
+    },
+    "window_close": {
+      "median_ms": 5,
+      "min_ms": 4,
+      "max_ms": 5,
+      "samples": 3
+    },
+    "browser_close": {
+      "median_ms": 54,
+      "min_ms": 51,
+      "max_ms": 55,
+      "samples": 3
+    }
+  },
+  "baseline_version": "2.0.0",
+  "comparison": {
+    "startup_ms": {
+      "before_median_ms": 704,
+      "after_median_ms": 576,
+      "change_percent": -18.2
+    },
+    "fecimus_status": {
+      "before_median_ms": 2,
+      "after_median_ms": 2,
+      "change_percent": 0
+    },
+    "display_size": {
+      "before_median_ms": 8,
+      "after_median_ms": 7,
+      "change_percent": -12.5
+    },
+    "shell_run": {
+      "before_median_ms": 29.5,
+      "after_median_ms": 27,
+      "change_percent": -8.5
+    },
+    "filesystem_write_text": {
+      "before_median_ms": 2,
+      "after_median_ms": 2,
+      "change_percent": 0
+    },
+    "filesystem_read_text": {
+      "before_median_ms": 2,
+      "after_median_ms": 1,
+      "change_percent": -50
+    },
+    "filesystem_stat": {
+      "before_median_ms": 1,
+      "after_median_ms": 1,
+      "change_percent": 0
+    },
+    "application_launch": {
+      "before_median_ms": 1836,
+      "after_median_ms": 69,
+      "change_percent": -96.2
+    },
+    "window_list": {
+      "before_median_ms": 6,
+      "after_median_ms": 4,
+      "change_percent": -33.3
+    },
+    "window_focus": {
+      "before_median_ms": 161,
+      "after_median_ms": 9,
+      "change_percent": -94.4
+    },
+    "window_geometry": {
+      "before_median_ms": 5,
+      "after_median_ms": 4,
+      "change_percent": -20
+    },
+    "window_active": {
+      "before_median_ms": 7,
+      "after_median_ms": 5,
+      "change_percent": -28.6
+    },
+    "mouse_move": {
+      "before_median_ms": 13,
+      "after_median_ms": 13,
+      "change_percent": 0
+    },
+    "mouse_position": {
+      "before_median_ms": 4,
+      "after_median_ms": 4,
+      "change_percent": 0
+    },
+    "mouse_click": {
+      "before_median_ms": 109,
+      "after_median_ms": 108,
+      "change_percent": -0.9
+    },
+    "keyboard_type_text": {
+      "before_median_ms": 14,
+      "after_median_ms": 16,
+      "change_percent": 14.3
+    },
+    "desktop_screenshot": {
+      "before_median_ms": 199,
+      "after_median_ms": 103,
+      "change_percent": -48.2
+    },
+    "browser_navigate": {
+      "before_median_ms": 126.5,
+      "after_median_ms": 123.5,
+      "change_percent": -2.4
+    },
+    "browser_type": {
+      "before_median_ms": 29,
+      "after_median_ms": 28,
+      "change_percent": -3.4
+    },
+    "browser_snapshot": {
+      "before_median_ms": 6,
+      "after_median_ms": 5,
+      "change_percent": -16.7
+    },
+    "browser_click": {
+      "before_median_ms": 202,
+      "after_median_ms": 201,
+      "change_percent": -0.5
+    },
+    "browser_take_screenshot": {
+      "before_median_ms": 87,
+      "after_median_ms": 85,
+      "change_percent": -2.3
+    },
+    "browser_tabs": {
+      "before_median_ms": 21,
+      "after_median_ms": 17,
+      "change_percent": -19
+    },
+    "browser_read_tabs": {
+      "before_median_ms": 160.5,
+      "after_median_ms": 160,
+      "change_percent": -0.3
+    },
+    "browser_scrape": {
+      "before_median_ms": 220,
+      "after_median_ms": 220,
+      "change_percent": 0
+    },
+    "window_close": {
+      "before_median_ms": 5,
+      "after_median_ms": 5,
+      "change_percent": 0
+    },
+    "browser_close": {
+      "before_median_ms": 55,
+      "after_median_ms": 54,
+      "change_percent": -1.8
+    }
+  }
+}

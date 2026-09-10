@@ -2,6 +2,24 @@
 
 Fecimus supports **Ubuntu LTS-based Linux** directly and **Windows 11 Pro through WSL2 Ubuntu LTS**. The AI receives a private Linux desktop with its own pointer, keyboard focus, clipboard, application profiles, and headless Chromium browser. Your physical pointer and fullscreen applications remain independent.
 
+## Choose your release archive
+
+| Download | Start after extracting the whole archive | Installation location |
+| --- | --- | --- |
+| `Fecimus-<version>-Linux-Ubuntu-LTS.tar.gz` | Read `START_HERE.md`; run `bash INSTALL_FECIMUS.sh` in a terminal | A fresh source copy under the Linux user's `~/.local/share/fecimus/sources/` |
+| `Fecimus-<version>-Windows-11-Pro-WSL2.zip` | Read `START_HERE.md`; run `INSTALL_FECIMUS.cmd` | A fresh source copy inside the selected WSL2 distribution |
+
+Both archives contain the same public Fecimus source and tools, with a platform-specific starter document and launcher at the top level. `README.md` remains the full project overview. Dependencies, model weights, browser profiles, application accounts, Blender, Unity, and GPU drivers are not bundled. Initial dependency installation needs internet access. The launcher remains open to show errors; it does not restart Windows or initialize your WSL user for you.
+
+Release checksums are supplied in `SHA256SUMS`. Each archive includes a `RELEASE_MANIFEST.json` listing file hashes, sizes, and modes; the packager verifies both the archive and a fresh extraction. To rebuild or check an archive without installing:
+
+```bash
+python3 scripts/package-release.py --output-dir dist
+python3 scripts/package-release.py --verify dist/Fecimus-2.1.0-Linux-Ubuntu-LTS.tar.gz
+```
+
+The first command requires reviewed public source to be staged and included in the installer allowlist. The verification command accepts the Windows `.zip` too. These checks establish archive integrity relative to its manifest, not publisher identity. [Linux starter](../platform/Linux/README.md) and [Windows starter](../platform/Windows/README.md) also describe prerequisites and rollback.
+
 ## Supported systems
 
 | Host | Runtime | Status |
@@ -74,6 +92,14 @@ The generated entry launches `wsl.exe --distribution <name> --exec /usr/bin/env 
 
 **The AI desktop contains Linux applications running in WSL2. This release does not provide an independent cursor inside your existing native Windows applications.** It does not move your Windows cursor or promise simultaneous automation of the same host application window. The installer sets `FECIMUS_FILE_ROOTS` to a JSON array containing your Linux home and your Windows user profile translated to its WSL path, so filesystem tools can use your Windows Documents/Downloads directly. Other parts of the Windows drive are not automatically added. This file-tool restriction does not confine authorized terminal commands.
 
+## Native applications, studio jobs, and graphics
+
+Use `fecimus_desktop_state` to observe Fecimus's private window/input state and optionally its screenshot. `fecimus_desktop_actions` batches up to 12 known mouse, keyboard, and window actions under one desktop queue, validates them before the first action, and stops at the first failure without replaying the batch. Existing individual desktop tools remain available. Screenshots describe Fecimus's display, not your physical desktop.
+
+Long commands use `fecimus_job_start`, `fecimus_job_status`, and `fecimus_job_cancel`. Jobs run with Fecimus's private application profile and display; project files are selected through an explicit working directory in the configured file roots. Browser sessions and native app profiles remain separate. Use a separate project copy when concurrent editing or application locks would cause conflicts. See [studio workflows](STUDIO.md) for argument examples, mounts, licenses, job lifetimes, and output checks.
+
+The private Xvfb display is not a GPU-accelerated desktop guarantee. Blender background rendering can be useful without a GUI; GPU compute still depends on the actual hardware, driver, build, and selected device. Unity's documented Linux Editor requirements do not certify XFCE/Xvfb, WSL2, or Linux ARM64 merely because Fecimus runs there. The [studio guide](STUDIO.md#graphics-and-validation) links the vendor requirements and distinguishes tested runtime behavior from untested application workflows.
+
 ## Background browser behavior
 
 - Fecimus controls its own Chromium profile and tabs, independent of your visible browser and screen focus.
@@ -92,7 +118,7 @@ The default configuration is `~/.lmstudio/mcp.json` on Linux and `%USERPROFILE%\
 
 Before an existing configuration changes, the installer keeps an exact adjacent `mcp.json.backup-<timestamp>-<id>`. A failure before registration leaves the configuration unchanged. To roll back, close LM Studio, restore your chosen backup as `mcp.json`, then reopen LM Studio.
 
-On Linux, update your checkout and rerun setup. On Windows, each setup stages a fresh source directory under `~/.local/share/fecimus/sources/` in WSL. Old source directories remain available for configuration rollback; remove obsolete ones manually only after you no longer need those backups. Browser profiles and data reside under `~/.local/share/fecimus` independently of the source version. Back up that directory if you need to preserve browser sessions.
+For release archives, rerun the matching launcher to install into a fresh source directory; old source directories remain available for configuration rollback. For a direct Linux source checkout, updating that same checkout also changes the source referenced by old configurations, so retain a separate source copy if you need to roll back code. Remove obsolete source copies manually only after you no longer need their backups. Browser profiles and data reside under `~/.local/share/fecimus` independently of the source version. Back up that directory if you need to preserve browser sessions.
 
 After installation, restart LM Studio and enable **mcp/fecimus** for a compatible tool-calling model. Ask it to call `fecimus_status` to verify the live connection.
 
