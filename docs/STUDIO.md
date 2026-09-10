@@ -1,12 +1,12 @@
-# Studio projects: code, Blender, and Unity
+# Studio projects: code, Blender, Unity and local workers
 
-Fecimus can edit project files, inspect its own application windows, and supervise long commands while you use your desktop. Its private display solves cursor and focus conflicts. Application compatibility, graphics drivers, licenses, CPU/GPU contention, and project locking still determine what a particular workflow can do.
+Fecimus can edit project files, inspect its own application windows, and supervise long commands while you use your desktop. Its private display separates AI input from your desktop. In default compact mode, retrieve the schemas below with `fecimus_tools`, then invoke them through `fecimus_call`; full mode exposes the same tools directly. Application compatibility, graphics drivers, licenses, CPU/GPU contention, and project locking still determine what a particular workflow can do.
 
 ## Choose the interaction that fits the work
 
 | Work | Fecimus approach | What must already exist |
 | --- | --- | --- |
-| Source edits, assets, configuration | Filesystem tools, then a build/test job | Project inside a configured file root |
+| Source edits, assets, configuration | Project search/read/hash-checked edit, Git review, then a build/test job | Project inside a configured file root |
 | Blender scene generation or export | Blender background Python script in a job | Compatible Linux Blender installation and a reviewed script |
 | Blender frame/animation render | Background render job; inspect output files and logs | Scene, output directory, suitable render device |
 | Unity scripts, imports, tests, builds | Edit files; run a version-matched Linux Editor in batch mode when supported | Editor, modules, license, and a project copy not open elsewhere |
@@ -15,7 +15,7 @@ Fecimus can edit project files, inspect its own application windows, and supervi
 
 ## Project locations and file roots
 
-Linux filesystem tools include your real home directory by default. `FECIMUS_FILE_ROOTS` adds up to 16 absolute existing directories; paths are resolved against real filesystem locations, including symlinks. This is a file-tool boundary, not a restriction on everything a launched process can access.
+Linux filesystem tools include your real home directory by default. `FECIMUS_FILE_ROOTS` adds up to 16 absolute existing directories; the existing file guard checks real filesystem locations. The new project read/edit tools additionally refuse every symlink component. This is a file-tool boundary, not a restriction on everything a launched process can access.
 
 For example, add this environment value to Fecimus's MCP launch entry after creating the directory:
 
@@ -28,6 +28,48 @@ Restart the Fecimus integration after changing its launch environment. This sett
 On Windows, the installer supplies the Linux home and your translated Windows user profile in the generated `wsl.exe` argument list. Add another Linux root by editing that existing `FECIMUS_FILE_ROOTS=[...]` argument while retaining the profile root if needed. With default WSL drive mounts, `C:\Projects\MyGame` corresponds to `/mnt/c/Projects/MyGame`; custom mounts require their real Linux path. Fecimus does not mount new drives. Microsoft's [WSL filesystem guidance](https://learn.microsoft.com/en-us/windows/wsl/filesystems) recommends the Linux filesystem for Linux command-line workloads; a separate clone there often avoids cross-filesystem build overhead.
 
 Use separate working copies or Git worktrees when you and Fecimus edit the same project concurrently. Agree on an output directory and review the resulting diff/assets before importing them. Two independent cursors do not prevent competing saves to the same file. Keep Unity `Library`, `Temp`, and editor lock state separate between editor instances; do not open one project simultaneously in your editor and an Fecimus batch job.
+
+## Inspect, edit and verify a project
+
+Read project instructions and current repository state before modifying files. `fecimus_project_search` finds relevant text; `fecimus_project_read` returns a line range and the SHA-256 of the **complete original file bytes**. Pass that returned hash to `fecimus_project_edit` with one unique literal `old_text` and its replacement `new_text`. The replacement is not a regular expression: `$`, backslashes and parentheses remain literal text.
+
+| Tool | Useful arguments and limits |
+| --- | --- |
+| `fecimus_project_search` | Required `root` and `query`; optional `regex`, `glob`, `max_results`, `max_chars`. Default literal search, 100 matches and 12,000 output characters; maximum 500 matches and 40,000 characters. Glob supports `*`, `**` and `?`. |
+| `fecimus_project_read` | Required `path`; optional `start_line`, `line_count`, `max_chars`. Defaults to 200 lines/20,000 characters; maximum 1,000 lines/40,000 characters. Returns the full-file hash even when the selected view is clipped. |
+| `fecimus_project_edit` | Required `path`, `expected_sha256`, `new_text`; existing files also require one unique `old_text`. Use `expected_sha256:"absent"` and omit `old_text` to create a missing file. Parent directory must already exist. |
+| `fecimus_git_status` | Required `root`; `diff:true` adds staged and unstaged diffs. Combined default output limit is 16,000 characters, maximum 40,000. Does not stage, commit or reset. |
+
+Project reads/edits accept regular UTF-8 files up to 2 MiB; replacement inputs are limited to 262,144 characters each. Original line endings and unchanged text are retained. Binary `.blend` files and generated build outputs should be manipulated through the appropriate application, not text replacement.
+
+If another editor changes the file, an old hash fails. Fecimus rechecks both content and file metadata immediately before an atomic replacement, and exclusive creation refuses an existing destination. This catches ordinary competing saves, including simultaneous calls in the same server. It **cannot perform operating-system atomic compare-and-swap against an external writer** during the final check-to-rename gap. Use separate working copies for concurrent development; a rejected edit requires a fresh read and a new reviewed change, never a blind retry.
+
+Search skips hidden paths, `.env` files and common private/generated directories such as `private`, `node_modules`, `Library`, `Temp`, `build` and `dist`. Individual files are limited to 2 MiB. Ripgrep searches have a five-second deadline. If `rg` is absent, a bounded Node literal fallback is used; it explicitly reports that it does not interpret `.gitignore`. Regex search requires installing optional ripgrep in Linux/WSL (`sudo apt-get install ripgrep`). Partial searches and clipped line excerpts are flagged in results.
+
+Review `fecimus_git_status` with `diff:true`, then run the project's actual tests/build using a job. Check expected artifacts and visual output where appropriate before reporting completion.
+
+## Save a checkpoint for the next session
+
+`fecimus_workspace_notes` supports `list`, `read`, `write` and `delete` for an existing project directory. Create a new key without `revision`; read/list first and include the current revision to update or delete it. A stale revision fails without overwriting the stored note.
+
+Example arguments for a new checkpoint:
+
+```json
+{
+  "action": "write",
+  "project": "/home/yourname/Projects/Game",
+  "key": "next-session",
+  "kind": "checkpoint",
+  "title": "Movement controller progress",
+  "content": "Adjusted walk speed. Unit tests passed. Next: inspect diagonal movement in the editor."
+}
+```
+
+On the next start, explicitly list/read that project's checkpoint before continuing. Notes live under Fecimus's private data directory in `workspace-notes`, independently of chat history and source versions. Each project allows 256 notes/checkpoints with at most 64 KiB UTF-8 content each. They are reference data, not automatic instructions; they do not restore a running process, agent context or application session. Save only information the user intends to retain.
+
+## Discover installed applications
+
+Call `fecimus_app_probe` with `apps:["blender","unity","godot","git","node","python"]`, or give an absolute `executable` path. It checks PATH locations and bounded version queries for known applications. An explicit executable is inspected without execution unless you also supply its `app` kind. Unity is always inspected without launching it, accepting a license or opening a project. Finding an executable does not establish its project, license or GPU compatibility.
 
 ## Long-running jobs
 
@@ -59,9 +101,49 @@ Job processes use Fecimus's private display and application home/profile. Use `c
 
 After `fecimus_job_start`, poll `fecimus_job_status` at a sensible interval and inspect the exit status, logs, and expected output files. A zero exit status does not establish that an image is correct or a game build works. Never automatically repeat an action whose result is uncertain.
 
+## Optional local model workers
+
+`fecimus_agent_start` is a model/tool loop, distinct from a process job. It is optional: normal MCP use keeps your host in charge and does not require a separate API server. To start a local worker, run the LM Studio API with the chosen model available and reachable from Fecimus at a loopback `/v1` endpoint. Default: `http://127.0.0.1:1234/v1`. The runner attaches no API key, so an endpoint requiring authentication is not supported. It rejects remote hosts, embedded credentials and redirects. Windows/WSL has an [additional localhost networking requirement](PLATFORMS.md#optional-local-model-api-on-windows).
+
+Discover the schemas of the tools you want to allow. Then call `fecimus_agent_start`, for example with these arguments for a read-only inspection:
+
+```json
+{
+  "model": "YOUR_EXACT_LOADED_MODEL_ID",
+  "objective": "Inspect /home/yourname/Projects/Game and report its current Git changes. Do not edit files.",
+  "allowed_tools": ["fecimus_git_status", "fecimus_project_read", "fecimus_project_search"],
+  "max_turns": 6,
+  "timeout_ms": 180000,
+  "vision": false
+}
+```
+
+Use `fecimus_agent_status` with the returned `agent_id`; omit it to list recent workers. `fecimus_agent_cancel` requests cancellation. Workers share Fecimus's desktop and files, so use separate project copies and avoid simultaneous GUI actions. Tool whitelists control the tools offered to the worker; authorizing a general shell or job tool also authorizes that tool's broad capability. Starting the worker delegates that whitelist for the run: its internal tool calls do not request a fresh approval from your MCP host on every dispatch. The whitelist is not a sandbox.
+
+| Limit | Default and maximum |
+| --- | --- |
+| Concurrent workers | 2; setting `agents.max_concurrent` permits 1 or 2 |
+| Model turns | 8 by default; 1–30 |
+| Output tokens per turn | 1,024 by default; 128–8,192 |
+| Overall runtime | 15 minutes by default; maximum 15 minutes |
+| Each model request | 120 seconds by default; maximum 120 seconds |
+| Serialized context | 256 KiB by default; maximum 2 MiB; byte limit is not a model token-window guarantee |
+| Tool whitelist | 1–32 explicit tool names; no recursive agent/control/discovery dispatch |
+| Retained progress | 32 runs and 32,768 log characters per run, in memory |
+
+The runner validates a complete model tool-call response before dispatch, executes approved calls sequentially, and stops on invalid calls, tool errors, context overflow or exhausted budgets. It does not silently drop history or retry uncertain actions. `vision:true` requires a model/runtime that accepts image observations; the default is text-only. A final model report is not independent proof that its claims are correct.
+
+Cancellation aborts the model request and the current tool signal, but an already dispatched action may finish. Check `in_flight_tool` and actual project state. Workers end with Fecimus and cannot resume after restart; saving a note is a separate explicit step. This feature is not a durable scheduler. Simulated local-server tests validate the loop's protocol and limits, not a real model's task performance.
+
+## Observe and stop work
+
+Call `fecimus_control_panel` and open its private local link. Its optional two-second screenshot viewer is read-only and stops polling while hidden. Pause blocks new controlled calls; already running jobs/model requests may continue. Stop additionally requests cancellation of active calls, jobs and workers. It does not roll back files or enforce a security/resource boundary. Keep the session link private and inspect actual state before restarting interrupted work.
+
+Desktop observation currently uses screenshots, window metadata and grounded coordinates. A native AT-SPI/accessibility-semantic bridge is **not implemented**. Browser DOM snapshots are a separate capability. Custom editor canvases and unpainted/minimized native windows still need application-specific handling.
+
 ## Blender example
 
-Install a Linux Blender build that supports your architecture and scene version. First run `blender --version` as a job, then verify a small scene before committing substantial render time. Blender supports background rendering without an X server, and command argument order matters: output options precede the render action. [Blender command-line rendering](https://docs.blender.org/manual/en/4.5/advanced/command_line/render.html).
+Install a Linux Blender build that supports your architecture and scene version. Use `fecimus_app_probe` to inspect the installation/version, then verify a small scene before committing substantial render time. Blender supports background rendering without an X server, and command argument order matters: output options precede the render action. [Blender command-line rendering](https://docs.blender.org/manual/en/4.5/advanced/command_line/render.html).
 
 Example `fecimus_job_start` arguments, using a project and output directory that already exist:
 
@@ -103,12 +185,12 @@ A practical Windows workflow is for Fecimus to prepare code/assets in a separate
 
 Xvfb renders into a virtual framebuffer and can run without physical display hardware or input devices. It is not a GPU passthrough or 3D acceleration layer. A particular application might expose software OpenGL, fail to initialize graphics, or require another environment. Background compute that can reach a compatible GPU is a separate capability and must be verified on the actual machine. [X.Org Xvfb manual](https://www.x.org/archive/X11R7.5/doc/man/man1/Xvfb.1.html).
 
-On 2026-09-09, Blender **4.5.13 LTS** was downloaded from Blender's official release server, checked against its published SHA-256, and exercised through Fecimus on **Linux Mint 22.3 x64 / Ubuntu 24.04 base**:
+For the **Fecimus 2.1.0 release**, on 2026-09-09, Blender **4.5.13 LTS** was downloaded from Blender's official release server, checked against its published SHA-256, and exercised through Fecimus on **Linux Mint 22.3 x64 / Ubuntu 24.04 base**:
 
 - A supervised background job used Cycles on the **CPU** to render a disposable factory cube scene at **64×64**, producing a PNG and saved `.blend` file with exit code 0.
 - Blender opened that scene on Fecimus's isolated display. A fully painted screenshot showed the viewport, menus, outliner, and properties; observing the initial window alone was insufficient to establish that the interface had finished painting.
 - Normal application window closure and background GUI-job cancellation were exercised, with no Blender processes left afterward.
 
-This is evidence of a basic CPU-render and GUI workflow on that machine. Graphics acceleration was not measured. It does not certify GPU rendering, larger scenes, Unity licensing/build modules, commercial assets, or a native Windows/WSL graphics pipeline. The private profile used for this fixture also does not establish that a user's licensed application setup transfers automatically. See [performance and validation](PERFORMANCE.md) for the measured scope.
+This historical fixture is evidence of a basic CPU-render and GUI workflow on that machine; it is not a fresh 3.0 application benchmark. Graphics acceleration was not measured. It does not certify GPU rendering, larger scenes, Unity licensing/build modules, commercial assets, or a native Windows/WSL graphics pipeline. The private profile used for this fixture also does not establish that a user's licensed application setup transfers automatically. See [performance and validation](PERFORMANCE.md) for the measured scope.
 
 Repository tests separately cover job supervision, argument handling, bounded logs, cancellation, and private-display behavior with fixtures. Check a small job with your actual application version and project before describing that workflow as validated.

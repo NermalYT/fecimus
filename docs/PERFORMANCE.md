@@ -1,5 +1,13 @@
 # Performance and validation
 
+## Version 3.0 protocol overhead
+
+On 2026-09-10, the actual MCP server returned 99 core tools in full mode. The serialized tool array was **54,949 UTF-8 bytes**, versus **2,337 bytes** for the five compact-mode entry tools: **95.75% less initial schema data**. This measures JSON bytes, not tokens, latency or model quality. Later discovery calls transfer the selected schemas; full mode remains available for hosts/models that work better with direct tool registration.
+
+Version 3 adds project tools, persistent checkpoints, bounded local workers, and a local control panel. Tests use synthetic loopback model responses to verify tool orchestration, limits and cancellation. No chat model was installed for a real inference comparison; the 38-model guide is a researched candidate catalog, not a set of certified models. Windows CI validates portable code and installer mocks; it is not Windows 11/WSL hardware validation.
+
+## Historical 2.1 measurements
+
 Measured on 2026-09-09 using Node 22.23.2 on Linux Mint 22.3 x64 (Ubuntu 24.04 base). The baseline is Fecimus **v2.0.0**; the revised implementation is **v2.1.0**. These are local tool-call measurements, not a guarantee of model reasoning speed, production application load time, or rendering performance.
 
 ## Comparable tool timings
@@ -39,7 +47,7 @@ Blender 4.5.13 LTS was downloaded from its official release server and SHA-256 v
 
 ## Reproduce
 
-Install the [integration-test prerequisites](../README.md#configuration-and-diagnostics), then run on supported Linux or inside supported WSL2:
+Install the [integration-test prerequisites](../README.md#verification-and-contributing), then run on supported Linux or inside supported WSL2:
 
 ```bash
 npm test
@@ -48,4 +56,4 @@ node scripts/benchmark.mjs --trials 3 --output dist/current.json
 
 To compare another implementation, pass `--server /absolute/path/to/checkout/src/server.mjs` (that checkout needs its dependencies), save its report, then run the current version with `--baseline dist/baseline.json`. The current fixture uses only the shared v2.0.0 tool surface for comparable measurements. Its benchmark mode excludes the new job/batch checks; `npm test` includes them. `--trials` accepts 1–10. The JSON records samples, ranges and medians; it excludes private profile paths.
 
-The automated suite covers 14 suites: API/unit tests, actual local browser/desktop integration and process lifecycle. GitHub CI runs Linux/Windows unit tests on Node 22/24, Windows installer mocks, Linux integration, and both package formats. CI checks on Windows do not establish a Windows 11 Pro hardware/WSL end-to-end run. Live model inference, native Windows GUI automation, Unity builds and GPU acceleration have not been validated.
+The historical v2.1 automated suite covered 14 suites: API/unit tests, actual local browser/desktop integration and process lifecycle. GitHub CI runs Linux/Windows unit tests on Node 22/24, Windows installer mocks, Linux integration, and both package formats. CI checks on Windows do not establish a Windows 11 Pro hardware/WSL end-to-end run. Live model inference, native Windows GUI automation, Unity builds and GPU acceleration have not been validated.
