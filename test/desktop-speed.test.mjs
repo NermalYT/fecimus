@@ -39,7 +39,11 @@ test('GUI launch preserves argument boundaries, project directory, and private H
     assert.deepEqual(result.args, ['a project with spaces', 'literal;$(echo untouched)']);
     assert.equal(await fs.realpath(result.cwd), await fs.realpath(dir));
     assert.equal(result.home, path.join(dir, 'private'));
-  } finally { await fs.rm(dir, { recursive: true, force: true }); }
+  } finally {
+    // Readiness precedes process exit. Windows can retain the child's current-
+    // directory lock briefly after its result is readable; retry only cleanup.
+    await fs.rm(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 });
+  }
 });
 
 test('screenshot transformations use crop-local cursor coordinates and retain a 256px region', () => {
