@@ -97,6 +97,40 @@ test/run.mjs
 test/studio-tools.test.mjs
 test/unit.mjs
 test/windows-installer.test.ps1
+docs/V3_CAPABILITY_AUDIT.md
+scripts/control.mjs
+src/agent-runner.mjs
+src/control-panel.mjs
+src/control-state.mjs
+src/help.mjs
+src/project-tools.mjs
+src/tool-discovery.mjs
+src/ui/control-panel.html
+src/ui/control-panel.css
+src/ui/control-panel.js
+src/workspace-tools.mjs
+test/agent-runner.test.mjs
+test/control-panel.test.mjs
+test/project-tools.test.mjs
+test/tool-discovery.test.mjs
+test/v3-protocol.test.mjs
+test/v3-lifecycle.test.mjs
+test/workspace-tools.test.mjs
+src/service-maintenance.mjs
+scripts/maintain.mjs
+test/service-maintenance.test.mjs
+src/addons.mjs
+scripts/addons.mjs
+test/addons.test.mjs
+test/extensions-protocol.test.mjs
+docs/UPGRADING.md
+docs/ADDONS.md
+.github/ISSUE_TEMPLATE/addon.yml
+addons/README.md
+examples/hello-addon/fecimus-addon.json
+examples/hello-addon/server.mjs
+examples/hello-addon/README.md
+examples/hello-addon/LICENSE
 """.split())
 
 BOOTSTRAP = r'''#!/usr/bin/env python3
@@ -175,7 +209,13 @@ def load_payload():
     if len(raw) > MAX_MANIFEST_BYTES:
         raise ValueError("Source manifest is too large.")
     payload = json.loads(raw)
-    return payload, validate_payload(payload)
+    decoded = validate_payload(payload)
+    if any(name == "SOURCE_MANIFEST.json" for name, _, _ in decoded):
+        raise ValueError("Reserved generated source manifest path.")
+    baseline = {"format": 1, "project": "fecimus", "version": payload["version"],
+                "files": [{key: entry[key] for key in ("path", "size", "sha256", "mode")} for entry in payload["files"]]}
+    decoded.append(("SOURCE_MANIFEST.json", (json.dumps(baseline, indent=2, sort_keys=True) + "\n").encode(), 0o644))
+    return payload, decoded
 
 
 def extract_source(destination, decoded):
@@ -284,6 +324,10 @@ def verify_bootstrap(content, files):
         command = [sys.executable, str(bootstrap), "--extract-only", str(target)]
         subprocess.run(command, check=True, capture_output=True, text=True)
         expected = {entry["path"]: entry["sha256"] for entry in files}
+        version = json.loads(next(base64.b64decode(entry["data"]) for entry in files if entry["path"] == "package.json"))["version"]
+        baseline = {"format": 1, "project": "fecimus", "version": version,
+                    "files": [{key: entry[key] for key in ("path", "size", "sha256", "mode")} for entry in files]}
+        expected["SOURCE_MANIFEST.json"] = hashlib.sha256((json.dumps(baseline, indent=2, sort_keys=True) + "\n").encode()).hexdigest()
         actual = {str(file.relative_to(target).as_posix()): hashlib.sha256(file.read_bytes()).hexdigest()
                   for file in target.rglob("*") if file.is_file()}
         if actual != expected:

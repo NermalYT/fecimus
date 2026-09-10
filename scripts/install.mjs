@@ -8,6 +8,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { assertSupportedPlatform } from '../src/platform.mjs';
+import { VERSION } from '../src/version.mjs';
 
 const project = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const LEGACY_SERVERS = Object.freeze(['playwright', 'desktop-mouse', 'desktop-vision', 'desktop-keyboard', 'desktop-apps', 'terminal-files']);
@@ -88,7 +89,7 @@ export async function verifyServer(entry) {
   const { Client } = require('@modelcontextprotocol/sdk/client/index.js');
   const { StdioClientTransport } = require('@modelcontextprotocol/sdk/client/stdio.js');
   const temporary = await fs.mkdtemp(path.join(os.tmpdir(), 'fecimus-install-check-'));
-  const client = new Client({ name: 'fecimus-installer-check', version: '2.0.0' });
+  const client = new Client({ name: 'fecimus-installer-check', version: VERSION });
   const transport = new StdioClientTransport({ command: entry.command, args: entry.args,
     env: { ...process.env, ...entry.env, FECIMUS_DATA_DIR: temporary }, stderr: 'pipe' });
   let log = '';
@@ -103,7 +104,7 @@ export async function verifyServer(entry) {
     if (!status.runtime?.healthy || status.backends?.length !== 6 || status.backends.some(backend => !backend.connected)) {
       throw new Error(`Unhealthy startup: ${JSON.stringify(status)}`);
     }
-    return { tools: listed.tools.length, backends: status.backends.length };
+    return { tools: status.tools, advertised_tools: listed.tools.length, backends: status.backends.length };
   } catch (error) { throw new Error(`MCP startup verification failed: ${error.message}${log ? '\n' + log : ''}`); }
   finally {
     await client.close().catch(() => {});

@@ -81,8 +81,8 @@ def public_source():
             raise ValueError("Missing or symlinked public source: " + name)
         files[name] = (target.read_bytes(), 0o755 if name.endswith(".sh") else 0o644)
     # Fail closed when newly added code/docs were omitted from the reviewed manifest.
-    extensions = {".mjs", ".js", ".py", ".json", ".md", ".sh", ".ps1", ".cmd", ".yml", ".yaml"}
-    for directory in ("src", "scripts", "docs", "test", "platform", ".github"):
+    extensions = {".mjs", ".js", ".py", ".json", ".md", ".sh", ".ps1", ".cmd", ".yml", ".yaml", ".html", ".css"}
+    for directory in ("src", "scripts", "docs", "test", "platform", ".github", "addons", "examples"):
         for target in (ROOT / directory).rglob("*"):
             if target.is_file() and target.suffix in extensions and "__pycache__" not in target.parts:
                 name = target.relative_to(ROOT).as_posix()
