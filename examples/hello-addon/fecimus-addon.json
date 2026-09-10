@@ -1,0 +1,12 @@
+{
+  "id": "hello",
+  "name": "Hello Fecimus",
+  "version": "1.0.0",
+  "description": "A self-contained local greeting addon. No dependencies or network access.",
+  "fecimus_compat": ">=3.0.0 <4.0.0",
+  "platforms": ["linux", "windows-wsl2"],
+  "server": {
+    "command": "{node}",
+    "args": ["{addon}/server.mjs"]
+  }
+}
