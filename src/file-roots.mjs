@@ -1,7 +1,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-const inside=(file,root)=>file===root||file.startsWith(root+path.sep);
+const inside=(file,root)=>{
+  const relative=path.relative(root,file);
+  return relative===''||(!path.isAbsolute(relative)&&relative!=='..'&&!relative.startsWith('..'+path.sep));
+};
+export function translateWindowsPath(input,platform=process.platform){
+  return platform!=='win32'&&/^[a-zA-Z]:[\\/]/.test(input)
+    ? '/mnt/'+input[0].toLowerCase()+'/'+input.slice(3).replaceAll('\\','/') : input;
+}
 export function createPathGuard({home=os.homedir(),roots=process.env.FECIMUS_FILE_ROOTS}={}) {
   const configured=typeof roots==='string'?JSON.parse(roots):roots;
   if(configured!==undefined&&(!Array.isArray(configured)||configured.length>16||configured.some(r=>typeof r!=='string'||!path.isAbsolute(r))))throw new Error('FECIMUS_FILE_ROOTS must be a JSON array of at most 16 absolute directories.');
@@ -17,7 +24,7 @@ export function createPathGuard({home=os.homedir(),roots=process.env.FECIMUS_FIL
       let expanded=input.trim();
       if(expanded==='~')expanded=home;
       else if(expanded.startsWith('~/'))expanded=path.join(home,expanded.slice(2));
-      else if(/^[a-zA-Z]:[\\/]/.test(expanded))expanded='/mnt/'+expanded[0].toLowerCase()+'/'+expanded.slice(3).replaceAll('\\','/');
+      else expanded=translateWindowsPath(expanded);
       const resolved=path.resolve(home,expanded);
       let current=resolved;const rest=[];
       for(;;){
