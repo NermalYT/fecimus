@@ -78,7 +78,8 @@ export class Gateway {
     this.configHash = createHash('sha256').update(JSON.stringify(config)).digest('hex');
     for (const [name, entry] of Object.entries(config)) {
       if (!entry || typeof entry.command !== 'string' || !entry.command || (entry.args !== undefined && (!Array.isArray(entry.args) || entry.args.some(a => typeof a !== 'string')))) throw new Error(`Invalid command configuration for ${name}.`);
-      const group = name.startsWith('desktop-') ? 'desktop' : name;
+      if (entry.toolPrefix !== undefined && !/^[a-z][a-z0-9_]{0,31}__$/.test(entry.toolPrefix)) throw new Error(`Invalid tool prefix for ${name}.`);
+      const group = name.startsWith('desktop-') || entry.group === 'desktop' ? 'desktop' : name;
       if (!this.queues.has(group)) this.queues.set(group, new SerialQueue());
       this.peers.set(name, { name, entry, group, connected: false, tools: [], client: null, connectPromise: null, closePromise: null, generation: 0, lastError: null, metrics: { calls: 0, errors: 0, connections: 0, total_ms: 0, last_ms: null, startup_ms: null } });
     }
@@ -110,7 +111,8 @@ export class Gateway {
     const usedValidators = new Set();
     for (const [backend, peer] of this.peers) {
       for (const tool of peer.tools) {
-        let name = tool.name;
+        let name = (peer.entry.toolPrefix || '') + tool.name;
+        if (peer.entry.toolPrefix && (!/^[a-zA-Z0-9_-]+$/.test(tool.name) || name.length > 64)) { this.log(`Skipping invalid addon tool name from ${backend}.`); continue; }
         if (next.has(name) || this.reserved.has(name)) name = `${backend.replace(/[^a-zA-Z0-9_]/g, '_')}_${tool.name}`;
         while (next.has(name) || this.reserved.has(name)) name = `_${name}`;
         try {
@@ -149,12 +151,12 @@ export class Gateway {
     const timeout = bounded(this.settings.startup_timeout_ms, 15000, 100, 60000);
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeout);
-    const useRuntime = peer.name.startsWith('desktop-') || peer.name === 'terminal-files';
+    const useRuntime = peer.name.startsWith('desktop-') || peer.name === 'terminal-files' || peer.entry.isolated === true;
     const client = new Client({ name: `fecimus-${peer.name}`, version: VERSION });
     const runtimeEnv = this.options.runtimeEnv;
     const env = { ...(useRuntime && runtimeEnv ? runtimeEnv : process.env), ...peer.entry.env };
     if (useRuntime && runtimeEnv) {
-      for (const key of ['DISPLAY', 'XAUTHORITY', 'WAYLAND_DISPLAY', 'XDG_SESSION_TYPE', 'SESSION_MANAGER', 'GDK_BACKEND', 'QT_QPA_PLATFORM', 'DBUS_SESSION_BUS_ADDRESS', 'DBUS_STARTER_ADDRESS', 'DBUS_STARTER_BUS_TYPE']) {
+      for (const key of ['DISPLAY', 'XAUTHORITY', 'WAYLAND_DISPLAY', 'XDG_SESSION_TYPE', 'SESSION_MANAGER', 'GDK_BACKEND', 'QT_QPA_PLATFORM', 'DBUS_SESSION_BUS_ADDRESS', 'DBUS_STARTER_ADDRESS', 'DBUS_STARTER_BUS_TYPE', ...(peer.entry.isolated ? ['HOME', 'XDG_CONFIG_HOME', 'XDG_DATA_HOME', 'XDG_CACHE_HOME', 'XDG_RUNTIME_DIR', 'FECIMUS_APP_HOME'] : [])]) {
         if (Object.hasOwn(runtimeEnv, key)) env[key] = runtimeEnv[key]; else delete env[key];
       }
     }
