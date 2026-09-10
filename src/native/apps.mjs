@@ -1,6 +1,5 @@
 
 import {
-    spawn,
     spawnSync,
 } from "node:child_process";
 
@@ -10,9 +9,7 @@ import {
     readdirSync,
 } from "node:fs";
 
-import {
-    setTimeout as sleep,
-} from "node:timers/promises";
+import { launchAndObserve, observeUntil } from "../desktop-workflow.mjs";
 
 import path from "node:path";
 
@@ -633,7 +630,7 @@ function normalizeWindowId(input) {
 }
 
 
-function getActiveWindow() {
+function getActiveWindow(windows) {
 
     let decimal;
 
@@ -665,12 +662,7 @@ function getActiveWindow() {
 
 
     return (
-        getWindows()
-            .find(
-                window =>
-                    window.id.toLowerCase() ===
-                    id.toLowerCase(),
-            )
+        (windows || getWindows()).find(window => Number.parseInt(window.id, 16) === Number.parseInt(id, 16))
         ||
         {
             id,
@@ -1018,157 +1010,50 @@ server.registerTool(
  * ========================================================== */
 
 server.registerTool(
-
     "application_launch",
-
     {
-
-        description:
-            "Launch an installed graphical application asynchronously. " +
-            "This returns without waiting for the GUI process to exit.",
-
-        inputSchema:
-            z.object({
-
-                desktop_id:
-                    z.string(),
-
-                wait_ms:
-                    z
-                        .number()
-                        .int()
-                        .min(0)
-                        .max(10000)
-                        .default(1800),
-
-            }),
-
+        description: "Launch a GUI in Fecimus's private desktop. Use desktop_id for an installed app, or executable with args for Blender, Unity, an IDE, or a project file. cwd selects the project directory. wait_ms is a maximum readiness wait; returns early when a new window appears. A window does not guarantee an app has finished loading its project.",
+        inputSchema: z.object({
+            desktop_id: z.string().optional(),
+            executable: z.string().min(1).max(4096).optional(),
+            args: z.array(z.string().max(8192)).max(128).default([]).describe("Arguments for executable; file arguments for a desktop_id. Each argument is a separate string, never a shell command."),
+            cwd: z.string().max(4096).optional(),
+            wait_ms: z.number().int().min(0).max(10000).default(1800),
+        }),
     },
-
-    async ({
-        desktop_id,
-        wait_ms,
-    }) => {
-
-        const app =
-            getApplications()
-                .find(
-                    candidate =>
-                        candidate.desktop_id ===
-                        desktop_id ||
-                        candidate.desktop_id ===
-                        `${desktop_id}.desktop`,
-                );
-
-
-        if (!app)
-        {
-
-            throw new Error(
-                `Application not found: ${desktop_id}`
-            );
-
+    async ({ desktop_id, executable, args, cwd, wait_ms }) => {
+        if (Boolean(desktop_id) === Boolean(executable)) throw new Error("Provide exactly one of desktop_id or executable.");
+        if (args.some(value => value.includes("\0")) || [executable, cwd].some(value => value?.includes("\0"))) throw new Error("Launch arguments cannot contain NUL bytes.");
+        if (args.reduce((size, value) => size + Buffer.byteLength(value), 0) > 131072) throw new Error("Combined launch arguments exceed 128 KiB.");
+        const workingDirectory = cwd ? path.resolve(process.env.HOME, cwd) : process.env.HOME;
+        let app;
+        let command = executable;
+        let launchArgs = args;
+        if (desktop_id) {
+            app = getApplications().find(candidate => candidate.desktop_id === desktop_id || candidate.desktop_id === `${desktop_id}.desktop`);
+            if (!app) throw new Error(`Application not found: ${desktop_id}`);
+            command = "gio";
+            launchArgs = ["launch", app.filename, ...args];
         }
-
-
-        const before =
-            new Set(
-                getWindows()
-                    .map(
-                        window =>
-                            window.id,
-                    ),
-            );
-
-
-        /*
-         * IMPORTANT:
-         *
-         * GUI launch is deliberately asynchronous.
-         *
-         * Do NOT use spawnSync() here.
-         */
-
-        const child =
-            spawn(
-                "gio",
-                [
-                    "launch",
-                    app.filename,
-                ],
-                {
-
-                    detached:
-                        true,
-
-                    stdio:
-                        "ignore",
-
-                    env:
-                        { ...process.env, HOME: process.env.FECIMUS_APP_HOME || process.env.HOME },
-
-                },
-            );
-
-
-        await new Promise((resolve, reject) => { child.once('spawn', resolve); child.once('error', reject); });
-        child.unref();
-
-
-        if (wait_ms > 0)
-        {
-
-            await sleep(
-                wait_ms,
-            );
-
-        }
-
-
-        const windows =
-            getWindows();
-
-
-        const newWindows =
-            windows.filter(
-                window =>
-                    !before.has(
-                        window.id,
-                    ),
-            );
-
-
-        return jsonResult({
-
-            started: true,
-            window_observed: newWindows.length > 0,
-
-            action:
-                "application_launch",
-
-            application: {
-
-                name:
-                    app.name,
-
-                desktop_id:
-                    app.desktop_id,
-
-            },
-
-            new_windows:
-                newWindows,
-
-            all_windows:
-                windows,
-
-            active_window:
-                getActiveWindow(),
-
+        const observed = await launchAndObserve(command, launchArgs, {
+            cwd: workingDirectory,
+            env: { ...process.env, HOME: process.env.FECIMUS_APP_HOME || process.env.HOME },
+            windows: getWindows,
+            timeoutMs: wait_ms,
         });
-
+        return jsonResult({
+            started: true,
+            window_observed: observed.windowObserved,
+            readiness: observed.windowObserved ? "window_observed" : "no_new_window_before_deadline",
+            action: "application_launch",
+            application: app ? { name: app.name, desktop_id: app.desktop_id } : { executable },
+            launcher_pid: observed.pid,
+            cwd: workingDirectory,
+            new_windows: observed.newWindows,
+            all_windows: observed.windows,
+            active_window: getActiveWindow(observed.windows),
+        });
     },
-
 );
 
 
@@ -1361,20 +1246,16 @@ server.registerTool(
         );
 
 
-        await sleep(
-            150,
-        );
-
-
-        return jsonResult({
-
-            success:
-                true,
-
-            active_window:
-                getActiveWindow(),
-
-        });
+        const observed = await observeUntil(getActiveWindow,
+            active => active !== null && Number.parseInt(active.id, 16) === Number.parseInt(id, 16), 1000);
+        return {
+            ...jsonResult({
+                success: observed.ready,
+                active_window: observed.value,
+                ...(observed.ready ? {} : { error: "Window manager did not confirm focus before the deadline." }),
+            }),
+            ...(observed.ready ? {} : { isError: true }),
+        };
 
     },
 

@@ -13,6 +13,7 @@ import {
 } from "node:fs";
 
 import path from "node:path";
+import { screenshotTransform } from "../desktop-workflow.mjs";
 
 import os from "node:os";
 
@@ -320,318 +321,29 @@ function clamp(
 }
 
 
-function captureDesktop({
-
-    region = null,
-
-    maxWidth = 1536,
-
-    quality = 82,
-
-    showCursor = true,
-
-}) {
-
-    const tempDir =
-        mkdtempSync(
-            path.join(
-                os.tmpdir(),
-                "local-fecimus-shot-",
-            ),
-        );
-
-
-    const raw =
-        path.join(
-            tempDir,
-            "raw.png",
-        );
-
-
-    const cropped =
-        path.join(
-            tempDir,
-            "cropped.png",
-        );
-
-
-    const annotated =
-        path.join(
-            tempDir,
-            "annotated.png",
-        );
-
-
-    const output =
-        path.join(
-            tempDir,
-            "output.jpg",
-        );
-
-
+function captureDesktop({ region = null, maxWidth = 1536, quality = 82, showCursor = true }) {
+    const tempDir = mkdtempSync(path.join(os.tmpdir(), "fecimus-shot-"));
+    const raw = path.join(tempDir, "raw.png");
+    const output = path.join(tempDir, "output.jpg");
     try {
-
-        run(
-            "scrot",
-            [
-                raw,
-            ],
-        );
-
-
-        let source =
-            raw;
-
-
-        let originX =
-            0;
-
-
-        let originY =
-            0;
-
-
-        if (region !== null) {
-
-            const display =
-                getDisplaySize();
-
-
-            const x =
-                Math.round(
-                    region.x,
-                );
-
-
-            const y =
-                Math.round(
-                    region.y,
-                );
-
-
-            const width =
-                Math.round(
-                    region.width,
-                );
-
-
-            const height =
-                Math.round(
-                    region.height,
-                );
-
-
-            if (
-                x < 0 ||
-                y < 0 ||
-                width <= 0 ||
-                height <= 0 ||
-                x + width > display.width ||
-                y + height > display.height
-            ) {
-
-                throw new Error(
-                    "Requested screenshot region is outside desktop bounds.",
-                );
-
-            }
-
-
-            run(
-                "convert",
-                [
-                    raw,
-
-                    "-crop",
-                    `${width}x${height}+${x}+${y}`,
-
-                    "+repage",
-
-                    cropped,
-                ],
-            );
-
-
-            source =
-                cropped;
-
-
-            originX =
-                x;
-
-
-            originY =
-                y;
-
-        }
-
-
-        /*
-         * scrot does not always include the physical
-         * mouse pointer.
-         *
-         * Add a small visible marker at the REAL mouse
-         * coordinates so the vision model knows exactly
-         * where the cursor currently is.
-         */
-
-        if (showCursor) {
-
-            const mouse =
-                getMousePosition();
-
-
-            const localX =
-                mouse.x -
-                originX;
-
-
-            const localY =
-                mouse.y -
-                originY;
-
-
-            const dimensions =
-                getImageSize(
-                    source,
-                );
-
-
-            const cursorInside =
-                localX >= 0 &&
-                localY >= 0 &&
-                localX < dimensions.width &&
-                localY < dimensions.height;
-
-
-            if (cursorInside) {
-
-                run(
-                    "convert",
-                    [
-                        source,
-
-                        "-fill",
-                        "none",
-
-                        "-stroke",
-                        "#ff1744",
-
-                        "-strokewidth",
-                        "3",
-
-                        "-draw",
-                        `circle ${localX},${localY} ${localX + 12},${localY}`,
-
-                        "-draw",
-                        `line ${localX - 16},${localY} ${localX + 16},${localY}`,
-
-                        "-draw",
-                        `line ${localX},${localY - 16} ${localX},${localY + 16}`,
-
-                        annotated,
-                    ],
-                );
-
-
-                source =
-                    annotated;
-
-            }
-
-        }
-
-
-        quality =
-            clamp(
-                Math.round(
-                    quality,
-                ),
-                45,
-                95,
-            );
-
-
-        maxWidth =
-            clamp(
-                Math.round(
-                    maxWidth,
-                ),
-                512,
-                2048,
-            );
-
-
-        run(
-            "convert",
-            [
-                source,
-
-                "-resize",
-                `${maxWidth}x>`,
-
-                "-strip",
-
-                "-quality",
-                String(
-                    quality,
-                ),
-
-                output,
-            ],
-        );
-
-
-        copyFileSync(
-            output,
-            LATEST_IMAGE,
-        );
-
-
-        const imageSize =
-            getImageSize(
-                output,
-            );
-
-
-        const base64 =
-            encodeImage(
-                output,
-            );
-
-
+        // Reuse a single desktop observation, including the cursor drawn on it.
+        const display = getDisplaySize();
+        const cursor = getMousePosition();
+        const transform = screenshotTransform({
+            raw, output, display, cursor, region, showCursor,
+            maxWidth: clamp(Math.round(maxWidth), 256, 2048),
+            quality: clamp(Math.round(quality), 45, 95),
+        });
+        run("scrot", [raw]);
+        run("convert", transform);
+        copyFileSync(output, LATEST_IMAGE);
         return {
-
-            base64,
-
-            imageSize,
-
-            displaySize:
-                getDisplaySize(),
-
-            cursor:
-                getMousePosition(),
-
-            path:
-                LATEST_IMAGE,
-
+            base64: encodeImage(output), imageSize: getImageSize(output), displaySize: display, cursor, path: LATEST_IMAGE,
+            region: region || { x: 0, y: 0, width: display.width, height: display.height },
         };
-
     } finally {
-
-        rmSync(
-            tempDir,
-            {
-                recursive:
-                    true,
-
-                force:
-                    true,
-            },
-        );
-
+        rmSync(tempDir, { recursive: true, force: true });
     }
-
 }
 
 
@@ -665,6 +377,15 @@ function imageResult(
 
         saved_copy:
             capture.path,
+
+        coordinate_space: "fecimus_private_desktop",
+
+        image_to_desktop: {
+            origin_x: capture.region.x,
+            origin_y: capture.region.y,
+            scale_x: capture.region.width / capture.imageSize.width,
+            scale_y: capture.region.height / capture.imageSize.height,
+        },
 
     };
 
@@ -786,7 +507,7 @@ server.registerTool(
                         .default(1536)
                         .describe(
                             "Maximum returned image width. " +
-                            "1536 preserves this laptop's full desktop width.",
+                            "Use a region capture to inspect small interface text.",
                         ),
 
                 quality:

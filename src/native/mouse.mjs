@@ -1,5 +1,8 @@
 
-import { spawnSync } from "node:child_process";
+import { spawnSync, execFile } from "node:child_process";
+import { promisify } from "node:util";
+import { movementCommands } from "../desktop-workflow.mjs";
+const execFileAsync = promisify(execFile);
 import { setTimeout as sleep } from "node:timers/promises";
 
 import { McpServer } from "@modelcontextprotocol/server";
@@ -291,108 +294,13 @@ async function smoothMove(
     durationMs = clamp(
         Math.round(durationMs),
         0,
-        3000,
+        5000,
     );
 
 
-    if (durationMs === 0) {
-
-        runXdotool([
-            "mousemove",
-
-            String(targetX),
-            String(targetY),
-        ]);
-
-
-        return getMousePosition();
-
-    }
-
-
-    const steps = clamp(
-        Math.round(durationMs / 18),
-        2,
-        60,
-    );
-
-
-    const delay = Math.max(
-        1,
-        Math.round(durationMs / steps),
-    );
-
-
-    for (
-        let step = 1;
-        step <= steps;
-        step += 1
-    ) {
-
-        const progress =
-            step / steps;
-
-
-        /*
-         * Smoothstep interpolation:
-         *
-         * 3t² - 2t³
-         *
-         * This makes the visible cursor accelerate and
-         * decelerate rather than teleporting instantly.
-         */
-
-        const eased =
-            progress *
-            progress *
-            (
-                3 -
-                2 * progress
-            );
-
-
-        const x = Math.round(
-            start.x +
-            (
-                targetX -
-                start.x
-            ) *
-            eased,
-        );
-
-
-        const y = Math.round(
-            start.y +
-            (
-                targetY -
-                start.y
-            ) *
-            eased,
-        );
-
-
-        runXdotool([
-            "mousemove",
-            String(x),
-            String(y),
-        ]);
-
-
-        if (step !== steps) {
-
-            await sleep(delay);
-
-        }
-
-    }
-
-
-    runXdotool([
-        "mousemove",
-
-        String(targetX),
-        String(targetY),
-    ]);
+    await execFileAsync("xdotool", movementCommands(start, { x: targetX, y: targetY }, durationMs), {
+        timeout: 10000, env: process.env,
+    });
 
 
     return getMousePosition();
@@ -706,29 +614,12 @@ server.registerTool(
             buttonNumber(button);
 
 
-        for (
-            let index = 0;
-            index < count;
-            index += 1
-        ) {
-
-            runXdotool([
-                "click",
-                String(number),
-            ]);
-
-
-            if (
-                index + 1 < count
-            ) {
-
-                await sleep(
-                    interval_ms,
-                );
-
-            }
-
-        }
+        // Xdotool also sleeps after the final click. interval_ms only describes
+        // gaps between repeated clicks; a single click keeps its normal settle.
+        const clickArgs = count === 1
+            ? ["click", String(number)]
+            : ["click", "--repeat", String(count), "--delay", String(interval_ms), String(number)];
+        await execFileAsync("xdotool", clickArgs, { timeout: 30000, env: process.env });
 
 
         return jsonResult({
@@ -794,21 +685,7 @@ server.registerTool(
             buttonNumber(button);
 
 
-        runXdotool([
-            "click",
-            String(number),
-        ]);
-
-
-        await sleep(
-            interval_ms,
-        );
-
-
-        runXdotool([
-            "click",
-            String(number),
-        ]);
+        await execFileAsync("xdotool", ["click", "--repeat", "2", "--delay", String(interval_ms), String(number)], { timeout: 10000, env: process.env });
 
 
         return jsonResult({
@@ -995,27 +872,7 @@ server.registerTool(
             Math.abs(clicks);
 
 
-        for (
-            let index = 0;
-            index < count;
-            index += 1
-        ) {
-
-            runXdotool([
-                "click",
-                String(button),
-            ]);
-
-
-            if (
-                index + 1 < count
-            ) {
-
-                await sleep(35);
-
-            }
-
-        }
+        await execFileAsync("xdotool", ["click", "--repeat", String(count), "--delay", "35", String(button)], { timeout: 10000, env: process.env });
 
 
         return jsonResult({

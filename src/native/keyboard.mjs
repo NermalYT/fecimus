@@ -1,6 +1,7 @@
 
 import {
     spawnSync,
+    execFile,
 } from "node:child_process";
 
 import {
@@ -16,6 +17,9 @@ import {
 } from "@modelcontextprotocol/server/stdio";
 
 import * as z from "zod/v4";
+import { promisify } from "node:util";
+import { observeUntil } from "../desktop-workflow.mjs";
+const execFileAsync = promisify(execFile);
 
 
 const SERVER_NAME =
@@ -348,7 +352,7 @@ function getActiveWindow() {
 }
 
 
-function readClipboard() {
+function readClipboard(timeout = 3000) {
 
     const result =
         spawnSync(
@@ -363,8 +367,7 @@ function readClipboard() {
                 encoding:
                     "utf8",
 
-                timeout:
-                    3000,
+                timeout,
 
                 env:
                     process.env,
@@ -501,22 +504,11 @@ server.registerTool(
         }
 
 
-        runXdotool([
-
-            "type",
-
-            "--clearmodifiers",
-
-            "--delay",
-            String(
-                interval_ms,
-            ),
-
-            "--",
-
-            text,
-
-        ]);
+        const expectedMs = Array.from(text).length * interval_ms;
+        if (expectedMs > 120000) throw new Error("Typing would exceed two minutes. Use keyboard_paste_text for this block or reduce interval_ms; no text was typed.");
+        await execFileAsync("xdotool", ["type", "--clearmodifiers", "--delay", String(interval_ms), "--", text], {
+            timeout: Math.max(15000, expectedMs + 10000), env: process.env,
+        });
 
 
         return jsonResult({
@@ -590,9 +582,8 @@ server.registerTool(
         );
 
 
-        await sleep(
-            120,
-        );
+        const clipboardReady = await observeUntil(() => readClipboard(100), value => value === text, 500);
+        if (!clipboardReady.ready) throw new Error("Clipboard ownership was not confirmed; no paste shortcut was sent.");
 
 
         runXdotool([
