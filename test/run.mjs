@@ -11,7 +11,7 @@ const env={...process.env,FECIMUS_DATA_DIR:state};
 // A locally extracted Xvfb can be used without installing system packages.
 const localXvfb=path.join(os.homedir(),'.local/share/fecimus/runtime/usr/bin/Xvfb');
 if(!env.FECIMUS_XVFB) await fs.access(localXvfb).then(()=>{env.FECIMUS_XVFB=localXvfb}).catch(()=>{});
-const suites=['gateway.test.mjs','browser-tools.test.mjs','catalog.test.mjs','browser-output.test.mjs','platform.test.mjs','file-roots.test.mjs','file-io.test.mjs','application-paths.test.mjs','check-model.test.mjs','integration-test.mjs','lifecycle-test.mjs'];
+const suites=[...(await fs.readdir(path.join(root,'test'))).filter(name=>name.endsWith('.test.mjs')).sort(),'integration-test.mjs','lifecycle-test.mjs'];
 const results=[];let log='';
 try {
  for(const suite of suites){

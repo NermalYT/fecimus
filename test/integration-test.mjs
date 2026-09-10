@@ -26,7 +26,7 @@ const jsonOf = result => result.structuredContent ?? JSON.parse(textOf(result));
 const client = new Client({ name: 'fecimus-integration', version: '2.0.0' });
 const transport = new StdioClientTransport({
   command: process.execPath,
-  args: [path.join(base, 'server.mjs')],
+  args: [process.env.FECIMUS_SERVER_MODULE || path.join(base, 'server.mjs')],
   env: { ...process.env, FECIMUS_BROWSER_PROFILE: path.join(temporary, 'browser-profile') },
   stderr: 'pipe',
 });
@@ -209,6 +209,41 @@ try {
   const unknown = await call('no_such_fecimus_tool', {}, { allowError: true }); assert(unknown.isError);
   report.push({ check: 'application launch, private HOME/XDG/display, native window, independent cursor/keyboard, screenshot, defaults and validation', passed: true });
 
+  if (process.env.FECIMUS_BENCHMARK_CORE_ONLY !== '1') {
+    const observed = jsonOf(await call('fecimus_desktop_state', { screenshot: false }));
+    assert.equal(observed.completed, 3); assert(!observed.stopped);
+    assert(observed.results.find(row => row.tool === 'window_list').result.windows.some(w => w.id === fixtureWindow.id));
+    const batch = await call('fecimus_desktop_actions', { steps: [
+      { tool: 'window_focus', arguments: { window_id: fixtureWindow.id } },
+      { tool: 'keyboard_type_text', arguments: { text: 'Batch', interval_ms: 0 } },
+      { tool: 'mouse_click' }
+    ] });
+    assert.equal(JSON.parse(batch.content.find(c => c.type === 'text').text).completed, 4);
+    assert(batch.content.some(c => c.type === 'image'), 'batch must return verification screenshot');
+    await waitFor(async () => {
+      const state = await fs.readFile(statePath, 'utf8');
+      return state.includes('CLICKS:2\n') && state.includes('KEYS:FecimusNative42Batch\n');
+    }, 'grouped native actions');
+    const invalidBatch = await call('fecimus_desktop_actions', { steps: [
+      { tool: 'keyboard_type_text', arguments: { text: 'MUST_NOT_RUN', interval_ms: 0 } },
+      { tool: 'mouse_move', arguments: { x: 'invalid', y: 0 } }
+    ], screenshot: false }, { allowError: true });
+    assert(invalidBatch.isError); assert.equal(jsonOf(invalidBatch).completed, 0);
+    assert(!(await fs.readFile(statePath, 'utf8')).includes('MUST_NOT_RUN'));
+    const literal = 'literal ; $(not-a-command) " spaced Ω';
+    const job = jsonOf(await call('fecimus_job_start', { command: process.execPath, cwd: temporary, args: ['-e',
+      'require("node:fs").writeFileSync("job-artifact.txt",process.argv[1]); setTimeout(()=>console.log("fixture-job-done"),250)', literal], timeout_ms: 5000 }));
+    assert(job.job_id); await call('fecimus_desktop_state', { screenshot: false });
+    const finished = await waitFor(async () => {
+      const state = jsonOf(await call('fecimus_job_status', { job_id: job.job_id }));
+      return state.state === 'succeeded' ? state : null;
+    }, 'nonblocking studio command completion');
+    assert.equal(finished.exit_code, 0); assert(finished.output.includes('fixture-job-done'));
+    assert.equal(await fs.readFile(path.join(temporary, 'job-artifact.txt'), 'utf8'), literal);
+    assert.equal((await call('fecimus_job_start', { command: 'fecimus-no-such-executable', cwd: temporary }, { allowError: true })).isError, true);
+    report.push({ check: 'atomic desktop observation/actions, invalid batch no-dispatch and asynchronous studio artifact', passed: true });
+  }
+
   const navigation = await call('browser_navigate', { url: origin + '/first' });
   // Fecimus includes automatic snapshots inline so navigation supplies usable refs.
   const snapshot = textOf(navigation);
@@ -240,6 +275,12 @@ try {
   assert.equal(remaining.pages.find(p => p.url === origin + '/first')?.text.includes('clicked:Background42'), true, 'scrape changed existing tab state');
   report.push({ check: 'background browser input, full-page capture, inactive tabs, parallel scraping and partial errors', screenshot: dimensions, passed: true });
   await call('window_close', { window_id: fixtureWindow.id }); fixtureWindow = null;
+  if (process.env.FECIMUS_BENCHMARK_CORE_ONLY !== '1') {
+    const explicit = jsonOf(await call('application_launch', { executable: path.join(temporary, 'fixture'), args: [fixtureTitle, statePath], cwd: temporary, wait_ms: 3000 }));
+    assert(explicit.started && explicit.window_observed, 'explicit executable must open a private window');
+    fixtureWindow = explicit.new_windows.find(w => w.title === fixtureTitle);
+    assert(fixtureWindow); await call('window_close', { window_id: fixtureWindow.id }); fixtureWindow = null;
+  }
   await call('browser_close');
   const hostAfter = await hostState();
   assert(!hostAfter.windows.includes(fixtureTitle));

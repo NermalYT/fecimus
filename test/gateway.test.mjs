@@ -71,6 +71,23 @@ try {
   assert(!(await fs.readFile(fifoLog,'utf8')).includes('cancelled'));
   reports.push('shared desktop FIFO and cancelled queued action never dispatched');
 
+  const beforeBatch = (await fs.readFile(fifoLog, 'utf8')).trim().split('\n').length;
+  const batchRun = mutex.invokeDesktopBatch([{tool:'echo',arguments:{label:'batch-first',delay:40}},{tool:'desktop_keyboard_echo',arguments:{label:'batch-second'}}]);
+  const outsideRun = mutex.invoke('echo',{label:'outside-batch'});
+  assert.equal((await batchRun).completed,2); assert(!(await outsideRun).isError);
+  assert.deepEqual((await fs.readFile(fifoLog,'utf8')).trim().split('\n').slice(beforeBatch),[
+    'start mouse echo batch-first','end mouse echo batch-first','start keyboard echo batch-second','end keyboard echo batch-second','start mouse echo outside-batch','end mouse echo outside-batch']);
+  const beforeInvalid = await fs.readFile(fifoLog,'utf8');
+  assert.equal((await mutex.invokeDesktopBatch([{tool:'echo',arguments:{label:'must-not-run'}},{tool:'echo',arguments:{n:'bad'}}])).completed,0);
+  assert.equal(await fs.readFile(fifoLog,'utf8'),beforeInvalid,'every batch argument is validated before dispatch');
+  assert((await g.invokeDesktopBatch([{tool:'echo'}])).error,'batch rejects non-desktop tools');
+  const stopped = await mutex.invokeDesktopBatch([{tool:'echo',arguments:{}},{tool:'crash',arguments:{}},{tool:'echo',arguments:{label:'after-failure'}}]);
+  assert.equal(stopped.completed,1); assert.equal(stopped.failed_step,1);
+  assert(!(await fs.readFile(fifoLog,'utf8')).includes('after-failure'));
+  assert.equal(contents(await mutex.invoke('echo')).n,7);
+  assert.equal((await fs.readFile(fifoLog,'utf8')).split('start mouse crash').length-1,1,'failed batch action never replayed');
+  reports.push('atomic desktop batches validate first, prevent interleaving, and stop without replay');
+
   const failFile = path.join(temp,'fail');
   const cachePath = path.join(temp,'cache.json');
   const cachedConfig = {fixture:entry({FAIL_FILE:failFile})};
@@ -129,6 +146,16 @@ try {
   await assert.rejects(queue.run(()=>2),/full/);
   await Promise.all([hold,pending]);
   reports.push('bounded queue rejects overflow');
+
+  const sameValidator = g.routes.get('echo').validate;
+  g.rebuildRoutes(); assert.equal(g.routes.get('echo').validate,sameValidator,'unchanged schemas reuse compiled validators');
+  const definition = g.peers.get('fixture').tools.find(t=>t.name==='echo');
+  definition.description='Changed description only'; g.rebuildRoutes(); assert.equal(g.routes.get('echo').validate,sameValidator);
+  definition.inputSchema.properties.n.minimum=10; g.rebuildRoutes();
+  assert.notEqual(g.routes.get('echo').validate,sameValidator,'changed schema recompiles');
+  assert((await g.invoke('echo',{n:7})).isError); assert.equal(contents(await g.invoke('echo',{n:10})).n,10);
+  assert(g.validators.size<=g.routes.size,'removed schemas do not accumulate');
+  reports.push('compiled schemas reused across discovery and invalidated when constraints change');
   console.log(JSON.stringify({passed:reports.length,checks:reports},null,2));
 } finally {
   await Promise.allSettled(gateways.map(g=>g.close()));
