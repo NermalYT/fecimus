@@ -29,6 +29,7 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
  const {name, arguments:args} = request.params;
  if (process.env.LOG) fs.appendFileSync(process.env.LOG, 'start '+process.env.ID+' '+name+' '+(args.label||'')+'\\n');
  if (name==='crash') process.exit(3);
+ if (process.env.REPORT_ENV) return {content:[{type:'text',text:JSON.stringify({name,display:process.env.DISPLAY,home:process.env.HOME})}]};
  if (name==='hang') await new Promise(() => {});
  if (args.delay) await new Promise(r=>setTimeout(r,args.delay));
  if (process.env.LOG) fs.appendFileSync(process.env.LOG, 'end '+process.env.ID+' '+name+' '+(args.label||'')+'\\n');
@@ -55,6 +56,17 @@ try {
   assert.equal(g.status().backends[0].calls,1,'invalid input was not dispatched');
   assert((await g.invoke('missing')).isError);
   reports.push('paged discovery, schema defaults, invalid-input no-dispatch, unknown tools');
+
+  const addon = make({'addon-hello':{...entry({REPORT_ENV:'1',DISPLAY:':host',HOME:'/host'}),toolPrefix:'hello__',isolated:true,group:'desktop'}},{runtimeEnv:{...process.env,DISPLAY:':fixture',HOME:temp},runtimeStatus:()=>({healthy:true})});
+  await addon.start();
+  assert.deepEqual(addon.listTools().map(tool=>tool.name),['hello__echo','hello__crash','hello__hang']);
+  assert.deepEqual(contents(await addon.invoke('hello__echo')),{name:'echo',display:':fixture',home:temp});
+  assert((await addon.invoke('echo')).isError);
+  assert.equal(addon.peers.get('addon-hello').group,'desktop');
+  await addon.peers.get('addon-hello').client.close();
+  assert.equal(contents(await addon.invoke('hello__echo')).name,'echo');
+  assert.equal(addon.peers.get('addon-hello').metrics.connections,2);
+  reports.push('addon prefixes route original names, persist through reconnect, share desktop queue and enforce private environment');
 
   const fifoLog = path.join(temp,'fifo.log');
   const mutex = make({'desktop-mouse':entry({LOG:fifoLog,ID:'mouse'}),'desktop-keyboard':entry({LOG:fifoLog,ID:'keyboard'})});

@@ -27,7 +27,7 @@ const client = new Client({ name: 'fecimus-integration', version: '2.0.0' });
 const transport = new StdioClientTransport({
   command: process.execPath,
   args: [process.env.FECIMUS_SERVER_MODULE || path.join(base, 'server.mjs')],
-  env: { ...process.env, FECIMUS_BROWSER_PROFILE: path.join(temporary, 'browser-profile') },
+  env: { ...process.env, FECIMUS_TOOL_MODE: 'full', FECIMUS_BROWSER_PROFILE: path.join(temporary, 'browser-profile') },
   stderr: 'pipe',
 });
 transport.stderr?.on('data', data => process.stderr.write(data));
