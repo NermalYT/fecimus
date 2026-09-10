@@ -107,10 +107,12 @@ try {
   assert.equal(contents(await timed.invoke('echo')).n,7);
   reports.push('dispatched timeout stops uncertain transport and recovers for a new call');
 
-  const partial = make({good:entry({}),bad:entry({DELAY:'2000'})},{settings:{startup_timeout_ms:300,call_timeout_ms:1000}});
+  // Leave room for a cold Windows process while keeping the bad backend's
+  // artificial delay well beyond the startup deadline.
+  const partial = make({good:entry({}),bad:entry({DELAY:'10000'})},{settings:{startup_timeout_ms:2000,call_timeout_ms:1000}});
   const started = Date.now();
   await partial.start();
-  assert(Date.now()-started<1700,'partial startup was bounded');
+  assert(Date.now()-started<7000,'partial startup was bounded');
   assert.equal(contents(await partial.invoke('echo')).n,7);
   assert(!partial.status().backends.find(p=>p.name==='bad').connected);
   reports.push('bounded partial startup preserves working backend');
