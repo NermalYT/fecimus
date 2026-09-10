@@ -3,7 +3,14 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {createPathGuard} from '../src/file-roots.mjs';
+import {createPathGuard,translateWindowsPath} from '../src/file-roots.mjs';
+test('Windows drive paths stay native on Windows and map to mounts only in Linux',()=>{
+ const windows='C:\\Users\\Test User\\Documents\\file.txt';
+ assert.equal(translateWindowsPath(windows,'win32'),windows);
+ assert.equal(translateWindowsPath('C:/Users/Test User/file.txt','win32'),'C:/Users/Test User/file.txt');
+ assert.equal(translateWindowsPath(windows,'linux'),'/mnt/c/Users/Test User/Documents/file.txt');
+ assert.equal(translateWindowsPath('/home/user/file.txt','linux'),'/home/user/file.txt');
+});
 test('file root guard allows intended roots and denies traversal, symlink escape and dangling links',()=>{
  const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'fecimus-roots-'));const home=path.join(tmp,'home'),extra=path.join(tmp,'documents'),outside=path.join(tmp,'outside');
  for(const p of [home,extra,outside])fs.mkdirSync(p);
