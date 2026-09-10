@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import { compactTool } from './catalog.mjs';
+import { VERSION } from './version.mjs';
 import { createHash } from 'node:crypto';
 import Ajv from 'ajv';
 import Ajv2020 from 'ajv/dist/2020.js';
@@ -106,6 +107,7 @@ export class Gateway {
   }
   rebuildRoutes() {
     const next = new Map();
+    const usedValidators = new Set();
     for (const [backend, peer] of this.peers) {
       for (const tool of peer.tools) {
         let name = tool.name;
@@ -114,12 +116,17 @@ export class Gateway {
         try {
           const compact = compactTool(tool);
           if (backend.startsWith('desktop-') && !compact.description?.startsWith('AI desktop.')) compact.description = `AI desktop. ${compact.description || ''}`;
-          next.set(name, { backend, original: tool.name, definition: { ...compact, name }, validate: inputValidator(tool.inputSchema) });
+          const schemaKey = JSON.stringify(tool.inputSchema);
+          let validate = this.validators.get(schemaKey);
+          if (!validate) { validate = inputValidator(tool.inputSchema); this.validators.set(schemaKey, validate); }
+          usedValidators.add(schemaKey);
+          next.set(name, { backend, original: tool.name, definition: { ...compact, name }, validate });
         } catch (error) { this.log(`Skipping invalid schema ${backend}/${tool.name}: ${errorText(error)}`); }
       }
     }
     const before = JSON.stringify(this.listTools());
     this.routes = next;
+    for (const key of this.validators.keys()) if (!usedValidators.has(key)) this.validators.delete(key);
     if (before !== JSON.stringify(this.listTools())) this.options.onToolsChanged?.();
   }
   listTools() { return [...this.routes.values()].map(route => route.definition); }
@@ -143,7 +150,7 @@ export class Gateway {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeout);
     const useRuntime = peer.name.startsWith('desktop-') || peer.name === 'terminal-files';
-    const client = new Client({ name: `fecimus-${peer.name}`, version: '2.0.0' });
+    const client = new Client({ name: `fecimus-${peer.name}`, version: VERSION });
     const runtimeEnv = this.options.runtimeEnv;
     const env = { ...(useRuntime && runtimeEnv ? runtimeEnv : process.env), ...peer.entry.env };
     if (useRuntime && runtimeEnv) {
@@ -209,49 +216,77 @@ export class Gateway {
   async invoke(name, args = {}, signal, options = {}) {
     const route = this.routes.get(name);
     if (!route) return toolError(`Unknown tool: ${name}. Refresh the Fecimus tool list.`);
-    let input;
-    try { input = route.validate(args); aborted(signal); } catch (error) { return toolError(errorText(error)); }
+    try { route.validate(args); aborted(signal); } catch (error) { return toolError(errorText(error)); }
     const peer = this.peers.get(route.backend);
     try {
-      return await this.queues.get(peer.group).run(async () => {
-        aborted(signal);
-        if ((peer.group === 'desktop' || peer.name === 'terminal-files') && this.options.runtimeStatus?.().healthy === false) {
-          return toolError('Fecimus isolated desktop is unavailable. Restart the Fecimus integration; no action was sent to any desktop.');
-        }
-        try { await this.ensureConnected(peer); } catch (error) { return toolError(`${peer.name} is unavailable: ${errorText(error)}. No action was sent; check fecimus_status.`); }
-        aborted(signal);
-        const currentRoute = this.routes.get(name);
-        if (!currentRoute || currentRoute.backend !== route.backend || currentRoute.original !== route.original) return toolError('This tool changed during backend recovery. Refresh the tool list; no action was sent.');
-        try { input = currentRoute.validate(args); } catch (error) { return toolError(errorText(error)); }
-        const started = Date.now();
-        peer.metrics.calls++;
-        let dispatched = false;
-        try {
-          const timeout = bounded(this.settings.call_timeout_ms, 180000, 100, 600000);
-          dispatched = true;
-          const result = await peer.client.callTool({ name: route.original, arguments: input, ...(options.meta ? { _meta: options.meta } : {}) }, undefined, {
-            timeout, maxTotalTimeout: timeout, signal,
-            ...(options.onprogress ? { onprogress: options.onprogress } : {})
-          });
-          if (result.isError) peer.metrics.errors++;
-          return this.options.transformResult ? await this.options.transformResult(name, result) : result;
-        } catch (error) {
-          peer.metrics.errors++;
-          peer.lastError = errorText(error);
-          // Stop an uncertain transport before allowing the next queued action. Never replay it.
-          peer.connected = false;
-          peer.closePromise = peer.client.close().catch(() => {});
-          await peer.closePromise;
-          return toolError(`${peer.name}/${route.original}: ${errorText(error)}. ${dispatched ? 'The action may have run; check actual state before retrying. Fecimus did not replay it.' : 'No action was sent.'}`);
-        } finally {
-          peer.metrics.last_ms = Date.now() - started;
-          peer.metrics.total_ms += peer.metrics.last_ms;
-        }
-      }, signal);
+      return await this.queues.get(peer.group).run(() => this.dispatch(name, route, args, signal, options), signal);
     } catch (error) { return toolError(errorText(error)); }
   }
+  async invokeDesktopBatch(steps, signal, options = {}) {
+    // Validate the entire known sequence before the first action. A batch owns
+    // the same desktop queue as individual calls, so keyboard focus cannot be
+    // changed by another Fecimus request in the middle of a sequence.
+    try {
+      aborted(signal);
+      if (!Array.isArray(steps) || !steps.length || steps.length > 16) throw new Error('A desktop sequence requires 1–16 steps.');
+      const planned = steps.map(step => {
+        const route = this.routes.get(step.tool);
+        if (!route || this.peers.get(route.backend)?.group !== 'desktop') throw new Error(`Not a desktop tool: ${step.tool}. No action was sent.`);
+        route.validate(step.arguments);
+        return { ...step, route };
+      });
+      return await this.queues.get('desktop').run(async () => {
+        const results = [];
+        for (const [index, step] of planned.entries()) {
+          let result;
+          try { result = await this.dispatch(step.tool, step.route, step.arguments, signal, options); }
+          catch (error) { result = toolError(errorText(error)); }
+          results.push({ tool: step.tool, result });
+          if (result.isError) return { results, completed: index, failed_step: index, stopped: true };
+        }
+        return { results, completed: results.length, stopped: false };
+      }, signal);
+    } catch (error) { return { results: [], completed: 0, stopped: true, error: errorText(error) }; }
+  }
+  async dispatch(name, route, args, signal, options = {}) {
+    const peer = this.peers.get(route.backend);
+    let input;
+    aborted(signal);
+    if ((peer.group === 'desktop' || peer.name === 'terminal-files') && this.options.runtimeStatus?.().healthy === false) {
+      return toolError('Fecimus isolated desktop is unavailable. Restart the Fecimus integration; no action was sent to any desktop.');
+    }
+    try { await this.ensureConnected(peer); } catch (error) { return toolError(`${peer.name} is unavailable: ${errorText(error)}. No action was sent; check fecimus_status.`); }
+    aborted(signal);
+    const currentRoute = this.routes.get(name);
+    if (!currentRoute || currentRoute.backend !== route.backend || currentRoute.original !== route.original) return toolError('This tool changed during backend recovery. Refresh the tool list; no action was sent.');
+    try { input = currentRoute.validate(args); } catch (error) { return toolError(errorText(error)); }
+    const started = Date.now();
+    peer.metrics.calls++;
+    let dispatched = false;
+    try {
+      const timeout = bounded(this.settings.call_timeout_ms, 180000, 100, 600000);
+      dispatched = true;
+      const result = await peer.client.callTool({ name: route.original, arguments: input, ...(options.meta ? { _meta: options.meta } : {}) }, undefined, {
+        timeout, maxTotalTimeout: timeout, signal,
+        ...(options.onprogress ? { onprogress: options.onprogress } : {})
+      });
+      if (result.isError) peer.metrics.errors++;
+      return this.options.transformResult ? await this.options.transformResult(name, result) : result;
+    } catch (error) {
+      peer.metrics.errors++;
+      peer.lastError = errorText(error);
+      // Stop an uncertain transport before allowing the next queued action. Never replay it.
+      peer.connected = false;
+      peer.closePromise = peer.client.close().catch(() => {});
+      await peer.closePromise;
+      return toolError(`${peer.name}/${route.original}: ${errorText(error)}. ${dispatched ? 'The action may have run; check actual state before retrying. Fecimus did not replay it.' : 'No action was sent.'}`);
+    } finally {
+      peer.metrics.last_ms = Date.now() - started;
+      peer.metrics.total_ms += peer.metrics.last_ms;
+    }
+  }
   status() {
-    return { version: '2.0.0', uptime_seconds: Math.round((Date.now() - this.startTime) / 1000), tools: this.routes.size,
+    return { version: VERSION, uptime_seconds: Math.round((Date.now() - this.startTime) / 1000), tools: this.routes.size,
       backends: [...this.peers.values()].map(peer => ({ name: peer.name, connected: peer.connected, tools: peer.tools.length, queued: this.queues.get(peer.group).jobs.length, last_error: peer.lastError, ...peer.metrics })),
       runtime: this.options.runtimeStatus?.() || null };
   }
