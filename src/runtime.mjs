@@ -5,8 +5,24 @@ import os from 'node:os';
 import crypto from 'node:crypto';
 import { spawn, execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { performance } from 'node:perf_hooks';
 const exec = promisify(execFile);
 const pause = ms => new Promise(r => setTimeout(r, ms));
+
+export async function waitForWindowManager(child, probe, { timeout = 5000, now = () => performance.now(), sleep = pause } = {}) {
+  const deadline = now() + timeout;
+  let lastProbe = '';
+  while (true) {
+    if (child.exitCode !== null || child.signalCode !== null) throw new Error(`AI window manager exited (code ${child.exitCode}, signal ${child.signalCode})`);
+    lastProbe = String(await probe()).trim();
+    // The EWMH root property must identify a real supporting window. Parsing the
+    // value avoids depending on xprop's human-readable "window id #" phrase.
+    if (/^_NET_SUPPORTING_WM_CHECK(?:\([^)]*\))?\s*(?:=|:)\s*(?:window id #\s*)?0x0*[1-9a-f][0-9a-f]*\b/im.test(lastProbe)) return;
+    const remaining = deadline - now();
+    if (remaining <= 0) throw new Error(`AI window manager startup timeout after ${timeout} ms; last root property: ${lastProbe.slice(-500) || '(empty)'}`);
+    await sleep(Math.min(100, remaining));
+  }
+}
 
 function firstLine(child, stream, timeout = 10000) {
   return new Promise((resolve, reject) => {
@@ -37,10 +53,16 @@ export async function startRuntime(base, settings = {}) {
   const children = [];
   let closed = false, display = null;
   const errors = [];
+  const diagnostics = [];
   function launch(command, args, options = {}) {
     const child = spawn('python3', [path.join(base, 'runtime-child.py'), String(process.pid), command, ...args], { stdio: ['ignore','pipe','pipe'], ...options });
+    const diagnostic = { command: path.basename(command), child, stderr: '' };
+    diagnostics.push(diagnostic);
     child.on('error', e => errors.push(e.message));
-    child.stderr?.on('data', b => { if (settings.debug) process.stderr.write(`[fecimus/runtime] ${b}`); });
+    child.stderr?.on('data', b => {
+      diagnostic.stderr = (diagnostic.stderr + b.toString()).slice(-4096);
+      if (settings.debug) process.stderr.write(`[fecimus/runtime/${diagnostic.command}] ${b}`);
+    });
     children.push(child);
     return child;
   }
@@ -75,15 +97,16 @@ export async function startRuntime(base, settings = {}) {
     env.DBUS_SESSION_BUS_ADDRESS = await firstLine(bus, bus.stdout);
     await exec('xdpyinfo', [], { env, timeout: 5000, maxBuffer: 1024*1024 });
     const wm = launch('xfwm4', ['--sm-client-disable','--compositor=off'], { env });
-    for (let i = 0; i < 50; i++) {
-      if (wm.exitCode !== null || wm.signalCode !== null) throw new Error('AI window manager exited');
-      const { stdout } = await exec('xprop', ['-root','_NET_SUPPORTING_WM_CHECK'], { env, timeout: 1000 });
-      if (stdout.includes('window id #')) break;
-      if (i === 49) throw new Error('AI window manager startup timeout');
-      await pause(100);
-    }
+    await waitForWindowManager(wm, async () => {
+      const { stdout } = await exec('xprop', ['-root', '-notype', '-f', '_NET_SUPPORTING_WM_CHECK', '32x', '_NET_SUPPORTING_WM_CHECK'], { env, timeout: 1000, maxBuffer: 8192 });
+      return stdout;
+    });
     const status = () => ({ mode: 'isolated', display, width, height, healthy: !closed && children.every(c => c.exitCode === null && c.signalCode === null) && !errors.length, processes: children.map(c => c.pid), errors: [...errors] });
     // A separate display never receives physical mouse/keyboard events.
     return { env, status, close };
-  } catch (error) { await close(); throw error; }
+  } catch (error) {
+    const detail = diagnostics.map(({ command, child, stderr }) => `${command}: exit=${child.exitCode}, signal=${child.signalCode}${stderr.trim() ? `\n${stderr.trim()}` : ''}`).join('\n');
+    await close();
+    throw new Error(`${error.message}${detail ? `\nPrivate runtime startup diagnostics (${display || 'display not assigned'}):\n${detail}` : ''}`, { cause: error });
+  }
 }
