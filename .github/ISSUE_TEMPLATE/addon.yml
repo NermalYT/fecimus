@@ -1,0 +1,83 @@
+name: Share an Fecimus addon
+description: Publish an optional community addon with source, installation instructions, and tested scope.
+title: "[Addon] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This submission is public. Share only files you intend to publish and have permission to distribute.
+        Community submissions are not automatically reviewed, certified, installed, or merged into Fecimus.
+        Read the [addon guide](https://github.com/NermalYT/fecimus/blob/main/docs/ADDONS.md) first.
+        For a private customization, keep your addon on your computer and do not submit this form.
+  - type: input
+    id: identity
+    attributes:
+      label: Addon name and version
+      placeholder: "hello-addon 1.0.0"
+    validations:
+      required: true
+  - type: textarea
+    id: purpose
+    attributes:
+      label: Purpose and tools
+      description: Describe the task it solves and list the tools it adds. Include an example request.
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: Source and download
+      description: Link to inspectable source and an exact release or commit. You can attach a source ZIP here using GitHub's attachment control. Include its SHA-256 and avoid mutable latest-only links.
+      placeholder: |
+        Source:
+        Release or commit:
+        Download or attachment:
+        SHA-256:
+    validations:
+      required: true
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Tested compatibility
+      description: State the Fecimus version, addon API version, Linux or Windows/WSL setup, host and exact models tested. Distinguish tested behavior from expected compatibility.
+      placeholder: |
+        Fecimus version / addon API:
+        OS and architecture (include WSL distribution on Windows):
+        MCP host and version:
+        Model, quantization and runtime:
+        Checks run and results:
+        Known limitations:
+    validations:
+      required: true
+  - type: textarea
+    id: installation
+    attributes:
+      label: Installation, example, and removal
+      description: Give complete dependency and setup commands, expected tool names, a harmless smoke test, and disable/removal instructions. Explain restart requirements and any manual configuration.
+    validations:
+      required: true
+  - type: textarea
+    id: access
+    attributes:
+      label: Files, processes, and network access
+      description: Explain what code executes, what it reads or writes, network destinations, credentials needed, side effects, and failure/cancellation behavior. Do not include real secrets.
+    validations:
+      required: true
+  - type: input
+    id: license
+    attributes:
+      label: License and third-party requirements
+      description: Give the source license and link to its text. Identify separately licensed assets, dependencies, applications or paid services.
+    validations:
+      required: true
+  - type: checkboxes
+    id: consent
+    attributes:
+      label: Submission agreement
+      options:
+        - label: I intend to publish these files and have permission to distribute them.
+          required: true
+        - label: I removed personal data, credentials, browser profiles, local notes and private configuration.
+          required: true
+        - label: I described actual validation and do not claim Fecimus endorsement or untested model compatibility.
+          required: true
