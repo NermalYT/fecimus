@@ -121,6 +121,10 @@ scripts/maintain.mjs
 test/service-maintenance.test.mjs
 src/addons.mjs
 scripts/addons.mjs
+scripts/setup-gui.py
+scripts/setup-gui.ps1
+docs/SETUP.md
+test/setup-gui.test.mjs
 test/addons.test.mjs
 test/extensions-protocol.test.mjs
 docs/UPGRADING.md
