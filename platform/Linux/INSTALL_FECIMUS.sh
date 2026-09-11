@@ -34,6 +34,12 @@ for fecimus_command in python3 curl tar xz sha256sum; do
   fi
 done
 
+if [[ "${1:-}" == --no-gui ]]; then
+  shift
+elif [[ $# == 0 && "${FECIMUS_NO_GUI:-0}" != 1 && -n "${DISPLAY:-}" ]] && python3 "$fecimus_root/scripts/setup-gui.py" --check >/dev/null 2>&1; then
+  exec python3 "$fecimus_root/scripts/setup-gui.py"
+fi
+
 fecimus_target="$HOME/.local/share/fecimus/sources/release-$(date -u +%Y%m%d-%H%M%S)-$$"
 echo "Installing a fresh Fecimus source copy in $fecimus_target"
 bash "$fecimus_root/scripts/install.sh" --copy-to "$fecimus_target" --system-deps --replace-legacy "$@"
