@@ -194,3 +194,23 @@ For the **Fecimus 2.1.0 release**, on 2026-09-09, Blender **4.5.13 LTS** was dow
 This historical fixture is evidence of a basic CPU-render and GUI workflow on that machine; it is not a fresh 3.0 application benchmark. Graphics acceleration was not measured. It does not certify GPU rendering, larger scenes, Unity licensing/build modules, commercial assets, or a native Windows/WSL graphics pipeline. The private profile used for this fixture also does not establish that a user's licensed application setup transfers automatically. See [performance and validation](PERFORMANCE.md) for the measured scope.
 
 Repository tests separately cover job supervision, argument handling, bounded logs, cancellation, and private-display behavior with fixtures. Check a small job with your actual application version and project before describing that workflow as validated.
+
+## Studio compatibility matrix
+
+A generic process launcher is not a dedicated integration with every editor. These are the actual routes available in 3.0.0; install the application's supported version separately and verify a disposable project before production work.
+
+| Studio / work | Available route | Validation / gap |
+| --- | --- | --- |
+| Blender | Linux background Python/render jobs; private desktop GUI | Earlier 4.5.13 CPU render/scene checks; GPU and every Blender version are not certified |
+| Unity | C# / asset / config edits; separately installed Linux Editor batch jobs | No live Unity build certification; vendor OS, graphics and license requirements apply |
+| Godot | Project/GDScript/C# edits; Linux headless jobs and editor launch | Example below; no live Godot validation in this release |
+| Unreal Engine | Source/config edits; user-supplied Linux build/cook commands | SDK, Linux Editor, GPU and project setup required; no Unreal automation plugin or live validation bundled |
+| Roblox Studio | Luau and exported text project edits; inspect diffs and hand off to Studio | **No native Studio connection, live playtest, place synchronization or publish tool bundled** |
+| Code editors / build systems | File tools, Git inspection and jobs for installed compilers/test runners | Run each project's real tests; no blanket language/toolchain certification |
+| Audio, video, CAD and other studio apps | Installed Linux CLI/scripting interface or compatible private X11 window | App-by-app verification required; native Windows/macOS-only GUIs need a separate bridge |
+
+[Roblox Studio's official setup guide](https://create.roblox.com/docs/studio/setup) specifies Windows and macOS. Installing Fecimus under WSL2 does not make Roblox Studio a Linux application. A future trusted addon could connect to a user-installed Studio plugin, but the generic addon system does **not** supply that bridge. Do not use text replacement on binary `.rbxl` assets. Export scripts/text through the application's supported workflow and let the user import/review changes. Publishing requires a separate explicit user action.
+
+[Godot's command-line interface](https://docs.godotengine.org/en/stable/tutorials/editor/command_line_tutorial.html) provides headless execution. For an installed matching editor and an existing project, a bounded import job can use `command:"godot"`, `args:["--headless","--path","/absolute/project","--editor","--quit"]`, and that project as `cwd`. Match flags to the installed version; exit code and logs must be checked. This is an invocation template, not a completed compatibility test.
+
+To integrate another studio, write a [local addon](ADDONS.md) around its supported SDK/CLI, declare dependencies and tested versions, validate arguments, and include a small create/read/change/export verification project. Addons can add tool interfaces; they cannot supply vendor licenses, unsupported operating-system support, model reasoning quality or a security sandbox.

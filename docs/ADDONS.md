@@ -121,3 +121,7 @@ Provide source, an exact version, an install/remove guide, dependencies, an exam
 Publish through the [addon submission form](https://github.com/NermalYT/fecimus/issues/new?template=addon.yml). Link inspectable source and a versioned download, or attach a source ZIP. Include a SHA-256 for the exact archive. A submission becomes a public community listing; it is not automatically installed, merged into a release or certified by Fecimus.
 
 For private changes, simply keep working locally. Neither addon installation nor [source maintenance](UPGRADING.md) uploads code, pushes Git commits or opens a pull request. If your chosen model runs in the cloud, source you ask it to read may still be sent through that model host.
+
+## Graphical installation
+
+Reopen the platform installer, choose **Install addon…**, select the extracted addon folder and confirm after reviewing its manifest. Restart Fecimus to activate it. See [the setup guide](SETUP.md). Uploading a submission is a separate, explicit action in the [community addon area](../addons/README.md).

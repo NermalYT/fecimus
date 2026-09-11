@@ -64,3 +64,7 @@ Malformed tool-call JSON is also a model/template/runtime issue. LM Studio may r
 ## Evidence labels
 
 “Implemented” identifies code and exposed interfaces. “Fixture-tested” identifies deterministic protocol/process/file tests. “Application-tested” requires the actual named application and environment; “model-tested” requires the exact model/runtime/quantization and real inference. A release archive or passing CI job cannot substitute for the latter two. Current pending release checks are not marked as passed in this audit.
+
+## Setup window evidence
+
+The Linux GTK setup window was rendered on an isolated Xvfb display and its **My addons** action completed against temporary private data. The actual addon CLI passed inspection/install/list and duplicate-install checks; a fixture installer failure retained its exit code and output for the GUI. The WPF Windows window requires Windows CI syntax checks and real Windows 11 user validation; Linux rendering does not validate Windows appearance or WSL installation. See [setup instructions](SETUP.md) and the [studio compatibility matrix](STUDIO.md#studio-compatibility-matrix).
