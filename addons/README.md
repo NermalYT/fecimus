@@ -6,6 +6,7 @@ Use this area to find or share optional extensions to your local Fecimus. Addons
 - [Submit an addon](https://github.com/NermalYT/fecimus/issues/new?template=addon.yml) with source or a source ZIP, installation steps, license, and tested compatibility.
 - [Create and install an addon](../docs/ADDONS.md).
 - [Try the included hello addon](../examples/hello-addon).
+- Optional vendor launchers: [Roblox Studio (experimental WSL2)](../examples/roblox-studio-addon) and [Unity CLI](../examples/unity-cli-addon). Read their prerequisites; live studio connections remain unverified.
 - [Ask your model for a private customization](../docs/UPGRADING.md).
 
 The issue directory accepts community submissions; a listing is not an audit, certification, or promise of support. Read the source and discussion before installing. An addon can run code with your user account's access. Tool schemas and namespacing do not sandbox that code.
