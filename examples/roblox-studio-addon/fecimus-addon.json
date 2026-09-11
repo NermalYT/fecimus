@@ -1,0 +1,18 @@
+{
+  "id": "roblox",
+  "name": "Roblox Studio (experimental WSL bridge)",
+  "version": "1.0.0",
+  "description": "Optional vendor MCP launcher. Requires a separately installed and configured studio. Live application compatibility has not been validated by Fecimus.",
+  "fecimus_compat": ">=3.0.0 <4.0.0",
+  "platforms": [
+    "windows-wsl2"
+  ],
+  "server": {
+    "command": "/mnt/c/Windows/System32/cmd.exe",
+    "args": [
+      "/d",
+      "/c",
+      "%LOCALAPPDATA%\\Roblox\\mcp.bat"
+    ]
+  }
+}
