@@ -13,6 +13,8 @@ backups/
 browser-profiles/
 browser-output/
 app-homes/
+workspace-notes/
+control.json
 runtime/
 runtime-packages/
 verification.json
@@ -25,3 +27,6 @@ latest.jpg
 *.zip
 __pycache__/
 *.pyc
+maintenance/
+SOURCE_MANIFEST.json
+RELEASE_MANIFEST.json

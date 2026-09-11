@@ -1,6 +1,6 @@
 {
   "name": "@nermalyt/fecimus",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "description": "One local MCP integration with an independent AI desktop and background browser.",
   "type": "module",
   "license": "MIT",
@@ -22,7 +22,10 @@
     "test:integration": "node test/integration-test.mjs && node test/lifecycle-test.mjs",
     "check:model": "node scripts/check-model.mjs",
     "benchmark": "node scripts/benchmark.mjs",
-    "package:release": "python3 scripts/package-release.py"
+    "package:release": "python3 scripts/package-release.py",
+    "control": "node scripts/control.mjs",
+    "maintain": "node scripts/maintain.mjs",
+    "addons": "node scripts/addons.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.26.0",

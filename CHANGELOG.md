@@ -1,5 +1,24 @@
 # Changelog
 
+## 3.0.0 — 2026-09-10
+
+Compact discovery, direct project workflows, persistent checkpoints and local supervision.
+
+- Graphical setup: native GTK Linux and WPF Windows setup windows, guided install/upgrade, addon folder inspection and trusted installation, installed-addon list, and explicit prerequisite/recovery instructions.
+
+- Preserve all 84 previous tools and add 15 tools: four project tools, workspace notes and application probing, three optional local agent tools, two discovery tools, built-in help, the control panel, local service maintenance and addon management. The complete catalog has **99 tools**; default compact mode advertises five entry tools. Full mode remains available.
+- Discover exact schemas through `fecimus_tools` and dispatch through `fecimus_call` without weakening original validation or replaying actions. Expose operating guides as tools/resources and two reusable MCP prompts.
+- Add bounded project search/line reads, SHA-256-checked unique literal edits, exclusive creation, and read-only Git status/diffs. Catch ordinary stale edits and recheck immediately before atomic replacement; do not claim operating-system compare-and-swap against external editors.
+- Save explicit project notes/checkpoints across restarts with revision checks; inspect installed studio/development applications without launching Unity to probe its version.
+- Provide a private loopback control panel with opt-in two-second desktop viewing, activity and job/agent state, and cooperative pause/resume/stop controls.
+- Run optional bounded local model workers with explicit models, tool whitelists, context/turn/network limits, status and cancellation. No cloud inference, recursive agents, automatic retries, durable scheduler or restart/resume is added.
+- Keep separate `Fecimus-3.0.0-Linux-Ubuntu-LTS.tar.gz` and `Fecimus-3.0.0-Windows-11-Pro-WSL2.zip` packages with accurate platform starters and rollback instructions.
+
+- Add private source backup/check/restore and explicit official-release preparation, with local modification checks and restart instructions.
+- Add explicitly trusted local MCP addons with namespaced tools, a working template, and an opt-in GitHub submission area.
+
+Release validation is recorded separately in the performance/platform documentation. Protocol and simulated-model tests do not certify real model inference. The Blender 4.5.13 CPU/GUI exercise below belongs to 2.1.0; Windows/ARM64 hardware, Unity and GPU workflows remain unverified unless separately recorded.
+
 ## 2.1.0 — 2026-09-09
 
 Desktop workflow helpers, supervised studio jobs, and separate platform release packages.
