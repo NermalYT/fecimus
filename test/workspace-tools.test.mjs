@@ -12,7 +12,7 @@ import { inputValidator } from '../src/gateway-core.mjs';
 
 const sha = value => crypto.createHash('sha256').update(value).digest('hex');
 async function fixture(t, overrides = {}) {
-  const home = await fs.mkdtemp(path.join(os.tmpdir(), 'fecimus workspace '));
+  const home = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'fecimus workspace ')));
   const project = path.join(home, 'project with spaces');
   const appHome = path.join(home, 'private');
   await fs.mkdir(project); await fs.mkdir(appHome);

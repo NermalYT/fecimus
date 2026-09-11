@@ -182,3 +182,20 @@ test('CLI supports local inspect/install/list/disable/remove and rejects extra f
   assert.equal(JSON.parse((await run(['enable', 'hello', '--trust'])).stdout).enabled, true);
   assert.equal(JSON.parse((await run(['remove', 'hello'])).stdout).removed, true);
 }));
+
+test('vendor studio templates inspect and register without starting proprietary applications', async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'fecimus-studio-manifests-'));
+  try {
+    for (const [folder, id, platform] of [['roblox-studio-addon', 'roblox', 'windows-wsl2'], ['unity-cli-addon', 'unity', 'linux']]) {
+      const manager = createAddonManager({ dataDir: path.join(dir, id), platform });
+      const source = path.resolve('examples', folder);
+      assert.equal((await manager.inspect(source)).compatible, true);
+      await manager.install(source, { trust: true });
+      const config = (await manager.backendConfig())[`addon-${id}`];
+      assert.equal(config.toolPrefix, `${id}__`);
+      assert.deepEqual(config.args, id === 'roblox' ? ['/d', '/c', '%LOCALAPPDATA%\\Roblox\\mcp.bat'] : ['mcp']);
+    }
+    const linux = createAddonManager({ dataDir: path.join(dir, 'linux'), platform: 'linux' });
+    assert.equal((await linux.inspect(path.resolve('examples/roblox-studio-addon'))).compatible, false);
+  } finally { await fs.rm(dir, { recursive: true, force: true }); }
+});

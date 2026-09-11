@@ -162,6 +162,7 @@ test('Git status/diffs are read-only, bounded and suppress configured external p
   const { root, call } = await fixture(t);
   const git = args => execFileSync('git', args, { cwd: root, stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, GIT_CONFIG_GLOBAL: process.platform === 'win32' ? 'NUL' : '/dev/null', GIT_CONFIG_NOSYSTEM: '1' } });
   git(['init']);
+  git(['config', 'core.autocrlf', 'true']);
   await fsp.writeFile(path.join(root, 'a.txt'), 'before\n'); git(['add', 'a.txt']);
   git(['-c', 'user.name=Fecimus Test', '-c', 'user.email=fecimus-test@example.invalid', 'commit', '-m', 'fixture']);
   await fsp.writeFile(path.join(root, 'a.txt'), 'staged\n'); git(['add', 'a.txt']);
@@ -172,6 +173,7 @@ test('Git status/diffs are read-only, bounded and suppress configured external p
   git(['config', 'diff.external', helper]); git(['config', 'core.fsmonitor', helper]);
   const indexBefore = hash(await fsp.readFile(path.join(root, '.git', 'index')));
   const result = data(await call('fecimus_git_status', { root, diff: true, max_chars: 40000 }, { env: { ...process.env, GIT_DIR: '/nonexistent-should-not-be-used' } }));
+  assert.equal(result.failed, false);
   assert.match(result.status.text, /MM a\.txt/);
   assert.match(result.staged_diff.text, /\+staged/); assert.match(result.unstaged_diff.text, /\+working/);
   assert.equal(fs.existsSync(marker), false); assert.equal(hash(await fsp.readFile(path.join(root, '.git', 'index'))), indexBefore);
@@ -198,7 +200,7 @@ test('Git cancellation cleans descendant processes and cannot hang on inherited 
   let alive = true;
   for (let i = 0; i < 100; i++) {
     try { alive = !/\) Z /.test(await fsp.readFile(`/proc/${pid}/stat`, 'utf8')); }
-    catch (error) { if (error.code === 'ENOENT') alive = false; else throw error; }
+    catch (error) { if (['ENOENT', 'ESRCH'].includes(error.code)) alive = false; else throw error; }
     if (!alive) break;
     await new Promise(resolve => setTimeout(resolve, 20));
   }
