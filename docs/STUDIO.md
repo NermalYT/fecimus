@@ -202,15 +202,19 @@ A generic process launcher is not a dedicated integration with every editor. The
 | Studio / work | Available route | Validation / gap |
 | --- | --- | --- |
 | Blender | Linux background Python/render jobs; private desktop GUI | Earlier 4.5.13 CPU render/scene checks; GPU and every Blender version are not certified |
-| Unity | C# / asset / config edits; separately installed Linux Editor batch jobs | No live Unity build certification; vendor OS, graphics and license requirements apply |
+| Unity | C# / asset / config edits; Linux Editor batch jobs; optional Unity CLI MCP addon | No live Unity build certification; vendor OS, graphics and license requirements apply |
 | Godot | Project/GDScript/C# edits; Linux headless jobs and editor launch | Example below; no live Godot validation in this release |
 | Unreal Engine | Source/config edits; user-supplied Linux build/cook commands | SDK, Linux Editor, GPU and project setup required; no Unreal automation plugin or live validation bundled |
-| Roblox Studio | Luau and exported text project edits; inspect diffs and hand off to Studio | **No native Studio connection, live playtest, place synchronization or publish tool bundled** |
+| Roblox Studio | Luau/text edits; optional official Studio MCP launcher addon | Experimental Windows/WSL2 bridge template; no live Studio validation |
 | Code editors / build systems | File tools, Git inspection and jobs for installed compilers/test runners | Run each project's real tests; no blanket language/toolchain certification |
 | Audio, video, CAD and other studio apps | Installed Linux CLI/scripting interface or compatible private X11 window | App-by-app verification required; native Windows/macOS-only GUIs need a separate bridge |
 
-[Roblox Studio's official setup guide](https://create.roblox.com/docs/studio/setup) specifies Windows and macOS. Installing Fecimus under WSL2 does not make Roblox Studio a Linux application. A future trusted addon could connect to a user-installed Studio plugin, but the generic addon system does **not** supply that bridge. Do not use text replacement on binary `.rbxl` assets. Export scripts/text through the application's supported workflow and let the user import/review changes. Publishing requires a separate explicit user action.
+[Roblox Studio's official setup guide](https://create.roblox.com/docs/studio/setup) specifies Windows and macOS. Installing Fecimus under WSL2 does not make Roblox Studio a Linux application. The optional [Roblox Studio addon](../examples/roblox-studio-addon/README.md) supplies a launcher for Roblox's built-in MCP interface on Windows through WSL2. Its live interoperability remains unvalidated; it does not control native windows through Fecimus's private cursor. Do not use text replacement on binary `.rbxl` assets. Export scripts/text through the application's supported workflow and let the user import/review changes. Publishing requires a separate explicit user action.
 
 [Godot's command-line interface](https://docs.godotengine.org/en/stable/tutorials/editor/command_line_tutorial.html) provides headless execution. For an installed matching editor and an existing project, a bounded import job can use `command:"godot"`, `args:["--headless","--path","/absolute/project","--editor","--quit"]`, and that project as `cwd`. Match flags to the installed version; exit code and logs must be checked. This is an invocation template, not a completed compatibility test.
 
 To integrate another studio, write a [local addon](ADDONS.md) around its supported SDK/CLI, declare dependencies and tested versions, validate arguments, and include a small create/read/change/export verification project. Addons can add tool interfaces; they cannot supply vendor licenses, unsupported operating-system support, model reasoning quality or a security sandbox.
+
+## Optional vendor studio addons
+
+The release includes [Roblox Studio](../examples/roblox-studio-addon/README.md) and [Unity CLI](../examples/unity-cli-addon/README.md) launcher manifests. Configure the vendor application first, then install the chosen folder through **Install addon…**. Both remain behind `mcp/fecimus`; vendor software, credentials and licenses are separate. Read each addon's prerequisites and unverified platform boundaries before use. These templates are not evidence that every studio is connected.

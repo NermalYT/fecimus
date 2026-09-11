@@ -31,3 +31,5 @@ Use **My addons** to view installed entries. A matching ID is never silently ove
 To try the bundled example, choose `examples/hello-addon`, install it, restart Fecimus, and discover `hello__greet`. See [making and submitting addons](ADDONS.md) and the [community section](../addons/README.md).
 
 The GUI is a setup utility; the separate `fecimus_control_panel` tool opens the live desktop/activity panel while Fecimus is running.
+
+Optional studio templates are included in `examples/roblox-studio-addon` and `examples/unity-cli-addon`. Prepare the vendor software first and read each template README; installing a launcher does not establish a verified live connection.
