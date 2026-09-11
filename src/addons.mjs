@@ -64,9 +64,16 @@ async function directory(directoryPath, create = false) {
   if (create) { try { await fs.mkdir(directoryPath, { mode: 0o700 }); } catch (error) { if (error.code !== 'EEXIST') throw error; } }
   const info = await fs.lstat(directoryPath);
   if (!info.isDirectory() || info.isSymbolicLink()) throw new Error('Addon directory must not be a symlink or file.');
-  const real = await fs.realpath(directoryPath);
-  const equal = process.platform === 'win32' ? real.toLowerCase() === path.resolve(directoryPath).toLowerCase() : real === path.resolve(directoryPath);
-  if (!equal) throw new Error('Addon directory ancestors must not be symlinks.');
+  // Check actual ancestors: Windows 8.3 names may differ from realpath without
+  // being links. A string comparison incorrectly rejects ordinary temp paths.
+  let ancestor = path.dirname(path.resolve(directoryPath));
+  while (true) {
+    const parent = await fs.lstat(ancestor);
+    if (!parent.isDirectory() || parent.isSymbolicLink()) throw new Error('Addon directory ancestors must not be symlinks.');
+    const next = path.dirname(ancestor);
+    if (next === ancestor) break;
+    ancestor = next;
+  }
   if (create && process.platform !== 'win32') await fs.chmod(directoryPath, 0o700);
 }
 async function tree(source, target, signal) {

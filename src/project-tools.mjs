@@ -322,7 +322,7 @@ async function captureGit(argv, root, options, maxChars) {
     const finish = (exitCode, error) => {
       if (done) return; done = true; clearTimeout(timer); clearTimeout(killTimer); clearTimeout(drainTimer); options.signal?.removeEventListener('abort', abort);
       child.stdout.destroy(); child.stderr.destroy();
-      resolve({ text: output, exit_code: exitCode, truncated, ...(reason ? { reason } : {}), ...(error || stderr.trim() ? { error: error?.message || stderr.trim() } : {}) });
+      resolve({ text: output, exit_code: exitCode, truncated, ...(reason ? { reason } : {}), ...(error ? { error: error.message } : stderr.trim() ? { [exitCode === 0 ? 'warning' : 'error']: stderr.trim() } : {}) });
     };
     child.once('error', error => finish(null, error));
     child.once('exit', code => { kill('SIGKILL'); drainTimer = setTimeout(() => finish(code), 100); });
