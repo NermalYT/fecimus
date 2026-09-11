@@ -31,8 +31,23 @@ jobs:
         run: |
           $tokens = $null
           $errors = $null
-          [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD 'scripts/install.ps1'), [ref]$tokens, [ref]$errors) | Out-Null
-          if ($errors.Count) { $errors | Format-List; exit 1 }
+          foreach ($script in @('scripts/install.ps1', 'scripts/setup-gui.ps1')) {
+            [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD $script), [ref]$tokens, [ref]$errors) | Out-Null
+            if ($errors.Count) { $errors | Format-List; exit 1 }
+          }
+      - name: Construct the Windows setup window without installing
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          Add-Type -AssemblyName PresentationFramework
+          $source = Get-Content scripts/setup-gui.ps1 -Raw
+          $markup = [regex]::Match($source, '(?s)\[xml\]\$markup = @''\r?\n(.*?)\r?\n''@')
+          if (-not $markup.Success) { throw 'Setup XAML was not found.' }
+          $window = [Windows.Markup.XamlReader]::Parse($markup.Groups[1].Value)
+          foreach ($name in @('Install', 'Addon', 'List', 'Status', 'Details', 'Distro')) {
+            if ($null -eq $window.FindName($name)) { throw "Missing setup control: $name" }
+          }
+          $window.Close()
       - name: Test Windows installer with mocked registry and WSL
         if: runner.os == 'Windows'
         shell: powershell
