@@ -143,3 +143,5 @@ See [CONTRIBUTING.md](CONTRIBUTING.md), [security reporting](SECURITY.md) and th
 ## Graphical setup and community addons
 
 Both platform archives include a native setup window with **Install / upgrade Fecimus**, **Install addon…** and **My addons**. See [setup instructions](docs/SETUP.md) for prerequisites and the extracted-folder addon workflow. Browse or submit community addons in the [addon area](addons/README.md); publication is opt-in.
+
+[Request coverage and remaining limitations](docs/REQUEST_STATUS.md) records which capabilities are implemented, fixture-tested, application-tested or still unavailable. Optional vendor launchers for Roblox Studio and Unity CLI are included under `examples`; live studio interoperability is not yet certified.
