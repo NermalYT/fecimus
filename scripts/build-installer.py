@@ -124,6 +124,7 @@ scripts/addons.mjs
 scripts/setup-gui.py
 scripts/setup-gui.ps1
 docs/SETUP.md
+docs/REQUEST_STATUS.md
 test/setup-gui.test.mjs
 test/addons.test.mjs
 test/extensions-protocol.test.mjs
@@ -135,6 +136,12 @@ examples/hello-addon/fecimus-addon.json
 examples/hello-addon/server.mjs
 examples/hello-addon/README.md
 examples/hello-addon/LICENSE
+examples/roblox-studio-addon/fecimus-addon.json
+examples/roblox-studio-addon/README.md
+examples/roblox-studio-addon/LICENSE
+examples/unity-cli-addon/fecimus-addon.json
+examples/unity-cli-addon/README.md
+examples/unity-cli-addon/LICENSE
 """.split())
 
 BOOTSTRAP = r'''#!/usr/bin/env python3
