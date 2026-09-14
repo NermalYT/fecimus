@@ -108,9 +108,18 @@ async function tree(source, target, signal) {
   return { files, bytes, directories };
 }
 async function manifestAt(directoryPath) {
-  const { bytes } = await regularFile(path.join(directoryPath, 'fecimus-addon.json'), 64 * 1024);
+  let bytes;
+  try { ({ bytes } = await regularFile(path.join(directoryPath, 'fecimus-addon.json'), 64 * 1024)); }
+  catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+    ({ bytes } = await regularFile(path.join(directoryPath, 'astra-addon.json'), 64 * 1024));
+  }
   let parsed;
   try { parsed = JSON.parse(bytes.toString('utf8')); } catch { throw new Error('Invalid fecimus-addon.json JSON.'); }
+  // Read pre-rename manifests without modifying the user's addon files.
+  if (parsed && !Object.hasOwn(parsed, 'fecimus_compat') && Object.hasOwn(parsed, 'astra_compat')) {
+    parsed.fecimus_compat = parsed.astra_compat; delete parsed.astra_compat;
+  }
   return { manifest: validateAddonManifest(parsed), manifest_sha256: hash(bytes) };
 }
 

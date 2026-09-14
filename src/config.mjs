@@ -2,8 +2,14 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+// Compatibility with installations configured before the Fecimus rename.
+for (const [key, value] of Object.entries(process.env)) {
+  if (key.startsWith('ASTRA_')) process.env[key.replace(/^ASTRA_/, 'FECIMUS_')] ??= value;
+}
 export const sourceDir = path.dirname(fileURLToPath(import.meta.url));
-export const dataDir = path.resolve(process.env.FECIMUS_DATA_DIR || path.join(os.homedir(), '.local/share/fecimus'));
+const currentData = path.join(os.homedir(), '.local/share/fecimus');
+const previousData = path.join(os.homedir(), '.local/share/astra-mcp');
+export const dataDir = path.resolve(process.env.FECIMUS_DATA_DIR || (fs.existsSync(currentData) || !fs.existsSync(previousData) ? currentData : previousData));
 export function defaultBackends() {
   const launch = name => ({ command: process.execPath, args: [path.join(sourceDir, 'native', `${name}.mjs`)] });
   return {
