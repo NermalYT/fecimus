@@ -1,0 +1,190 @@
+{
+  "date": "2026-09-11T16:12:36.825Z",
+  "passed": true,
+  "version": "4.7.2-stable (official)",
+  "scope": "Linux x86_64 headless import, run, hash-checked edit and rerun through compact MCP",
+  "initial_score": 42,
+  "edited_score": 84,
+  "calls": [
+    {
+      "tool": "fecimus_project_edit",
+      "ms": 22
+    },
+    {
+      "tool": "fecimus_project_edit",
+      "ms": 5
+    },
+    {
+      "tool": "fecimus_project_edit",
+      "ms": 5
+    },
+    {
+      "tool": "fecimus_job_start",
+      "ms": 57
+    },
+    {
+      "tool": "fecimus_job_status",
+      "ms": 2
+    },
+    {
+      "tool": "fecimus_job_status",
+      "ms": 2
+    },
+    {
+      "tool": "fecimus_job_status",
+      "ms": 2
+    },
+    {
+      "tool": "fecimus_job_status",
+      "ms": 2
+    },
+    {
+      "tool": "fecimus_job_status",
+      "ms": 3
+    },
+    {
+      "tool": "fecimus_job_status",
+      "ms": 2
+    },
+    {
+      "tool": "fecimus_job_status",
+      "ms": 1
+    },
+    {
+      "tool": "fecimus_job_status",
+      "ms": 1
+    },
+    {
+      "tool": "fecimus_job_status",
+      "ms": 1
+    },
+    {
+      "tool": "fecimus_job_status",
+      "ms": 1
+    },
+    {
+      "tool": "fecimus_job_status",
+      "ms": 2
+    },
+    {
+      "tool": "fecimus_job_status",
+      "ms": 2
+    },
+    {
+      "tool": "fecimus_job_status",
+      "ms": 2
+    },
+    {
+      "tool": "fecimus_job_status",
+      "ms": 2
+    },
+    {
+      "tool": "fecimus_job_status",
+      "ms": 1
+    },
+    {
+      "tool": "fecimus_job_status",
+      "ms": 1
+    },
+    {
+      "tool": "fecimus_job_status",
+      "ms": 1
+    },
+    {
+      "tool": "fecimus_job_status",
+      "ms": 2
+    },
+    {
+      "tool": "fecimus_job_status",
+      "ms": 1
+    },
+    {
+      "tool": "fecimus_job_status",
+      "ms": 2
+    },
+    {
+      "tool": "fecimus_job_status",
+      "ms": 2
+    },
+    {
+      "tool": "fecimus_job_status",
+      "ms": 3
+    },
+    {
+      "tool": "fecimus_job_status",
+      "ms": 2
+    },
+    {
+      "tool": "fecimus_job_status",
+      "ms": 2
+    },
+    {
+      "tool": "fecimus_job_status",
+      "ms": 1
+    },
+    {
+      "tool": "fecimus_job_status",
+      "ms": 3
+    },
+    {
+      "tool": "fecimus_job_status",
+      "ms": 3
+    },
+    {
+      "tool": "fecimus_job_status",
+      "ms": 2
+    },
+    {
+      "tool": "fecimus_job_start",
+      "ms": 50
+    },
+    {
+      "tool": "fecimus_job_status",
+      "ms": 1
+    },
+    {
+      "tool": "fecimus_job_status",
+      "ms": 2
+    },
+    {
+      "tool": "fecimus_job_status",
+      "ms": 2
+    },
+    {
+      "tool": "fecimus_project_read",
+      "ms": 4
+    },
+    {
+      "tool": "fecimus_project_edit",
+      "ms": 12
+    },
+    {
+      "tool": "fecimus_job_start",
+      "ms": 53
+    },
+    {
+      "tool": "fecimus_job_status",
+      "ms": 1
+    },
+    {
+      "tool": "fecimus_job_status",
+      "ms": 2
+    },
+    {
+      "tool": "fecimus_job_status",
+      "ms": 3
+    }
+  ],
+  "archive_url": "https://github.com/godotengine/godot/releases/download/4.7.2-stable/Godot_v4.7.2-stable_linux.x86_64.zip",
+  "archive_sha256": "cadd3204e728a35d3f13adb7fd0d7902636b79f6b95c40c265eb73b6c35329e4",
+  "host": "Linux Mint 22.3 / Ubuntu 24.04, x86_64, Node 22.23.2",
+  "model_involved": false,
+  "unverified": [
+    "editor GUI",
+    "C#",
+    "export templates",
+    "GPU rendering",
+    "Windows",
+    "other engine versions"
+  ]
+}

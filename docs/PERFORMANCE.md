@@ -57,3 +57,30 @@ node scripts/benchmark.mjs --trials 3 --output dist/current.json
 To compare another implementation, pass `--server /absolute/path/to/checkout/src/server.mjs` (that checkout needs its dependencies), save its report, then run the current version with `--baseline dist/baseline.json`. The current fixture uses only the shared v2.0.0 tool surface for comparable measurements. Its benchmark mode excludes the new job/batch checks; `npm test` includes them. `--trials` accepts 1–10. The JSON records samples, ranges and medians; it excludes private profile paths.
 
 The historical v2.1 automated suite covered 14 suites: API/unit tests, actual local browser/desktop integration and process lifecycle. GitHub CI runs Linux/Windows unit tests on Node 22/24, Windows installer mocks, Linux integration, and both package formats. CI checks on Windows do not establish a Windows 11 Pro hardware/WSL end-to-end run. Live model inference, native Windows GUI automation, Unity builds and GPU acceleration have not been validated.
+
+
+## Fecimus 3: real Godot headless verification
+
+On September 11, 2026, Godot 4.7.2 stable Linux x86_64 passed a disposable
+project exercise through Fecimus 3's five-entry compact MCP interface. Fecimus
+created a scene and GDScript, imported the project using a supervised job,
+ran the scene and checked its output artifact (score 42), then applied a
+SHA-256-checked script edit and reran it (score 84). The service and private
+project were cleaned up after the run. No chat model was involved.
+
+The [verification record](godot-verification.json) identifies the official
+release archive and its verified SHA-256. This covers headless GDScript
+import/run/edit on this Linux machine; it does not establish editor GUI,
+C#, export templates, GPU rendering, Windows, or other Godot versions.
+
+To repeat with an installed Godot 4 executable and the normal Linux integration
+prerequisites, run from the source root:
+
+```bash
+FECIMUS_GODOT=/absolute/path/to/godot node test/godot-integration.mjs
+```
+
+If Xvfb is extracted privately rather than installed on PATH, also set
+`FECIMUS_XVFB` to its executable. The test downloads nothing, uses a temporary
+project under HOME, and writes its report to `.test-output/godot-v3-verification.json`.
+It is optional and is not counted in the 29 default test suites.
