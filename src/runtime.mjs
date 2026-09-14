@@ -9,7 +9,9 @@ import { performance } from 'node:perf_hooks';
 const exec = promisify(execFile);
 const pause = ms => new Promise(r => setTimeout(r, ms));
 
-export async function waitForWindowManager(child, probe, { timeout = 5000, now = () => performance.now(), sleep = pause } = {}) {
+// Cold desktop/font startup can exceed five seconds on a fresh installation.
+// Poll readiness immediately; the larger deadline does not delay a ready session.
+export async function waitForWindowManager(child, probe, { timeout = 15000, now = () => performance.now(), sleep = pause } = {}) {
   const deadline = now() + timeout;
   let lastProbe = '';
   while (true) {
