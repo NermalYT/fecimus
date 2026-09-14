@@ -100,3 +100,13 @@ If the installation's maintenance command itself was damaged, recover the affect
 - Obtain a concrete released version when the user requests an official update. Explain any merge conflict instead of silently dropping local work.
 - Do not upload local changes or diagnostics unless the user explicitly requests that destination and content.
 - Report failed checks and activation limits accurately. A passing syntax check does not establish desktop, model or application compatibility.
+
+## Rename compatibility
+
+Fecimus retains pre-rename environment variables and an existing legacy data
+folder when no new data location exists. Existing addon manifest filenames and
+compatibility fields are read without rewriting user files. These are intentional
+legacy references, not public branding. Back up configuration before replacing
+an installation; restart the host to discover the renamed `fecimus_*` tools.
+The local source checkout path may retain its old directory name so existing
+host launch commands keep working. GitHub redirects the previous repository URL.
