@@ -182,6 +182,18 @@ test('Git status/diffs are read-only, bounded and suppress configured external p
   const outsideRepo = path.dirname(root); failure(await call('fecimus_git_status', { root: outsideRepo }), /not a git repository/);
 });
 
+test('Git output-limit termination preserves stderr as a diagnostic, not a command failure', { skip: process.platform !== 'linux' }, async t => {
+  const { root, call } = await fixture(t);
+  const bin = path.join(root, 'fake-bin'); await fsp.mkdir(bin);
+  const fakeGit = `#!${process.execPath}\nprocess.stderr.write('fixture warning\\n');process.stdout.write('x'.repeat(10000));setInterval(()=>{},1000);`;
+  await fsp.writeFile(path.join(bin, 'git'), fakeGit, { mode: 0o700 });
+  const result = data(await call('fecimus_git_status', { root, max_chars: 100 }, { env: { ...process.env, PATH: bin + path.delimiter + process.env.PATH } }));
+  assert.equal(result.failed, false); assert.equal(result.partial, true);
+  assert.equal(result.status.reason, 'output limit');
+  assert.match(result.status.warning, /fixture warning/);
+  assert.equal(result.status.text.length, 100);
+});
+
 test('Git cancellation cleans descendant processes and cannot hang on inherited pipes', { skip: process.platform !== 'linux' }, async t => {
   const { root, call } = await fixture(t);
   const bin = path.join(root, 'fake-bin'); await fsp.mkdir(bin);

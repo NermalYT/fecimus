@@ -89,3 +89,17 @@ test('unready and exited window managers fail closed with actionable bounded dia
   await assert.rejects(waitForWindowManager({ exitCode: 1, signalCode: null }, () => assert.fail('no probe after exit')), /exited \(code 1/);
   await assert.rejects(waitForWindowManager(running, async () => { throw new Error('xprop access denied'); }), /access denied/);
 });
+
+
+test('cold window-manager startup can exceed five seconds but remains bounded', async () => {
+  let clock = 0;
+  await waitForWindowManager(running, async () => clock >= 6000 ? '_NET_SUPPORTING_WM_CHECK = 0x20' : '', {
+    now: () => clock, sleep: async ms => { clock += ms; },
+  });
+  assert.equal(clock, 6000);
+  clock = 0;
+  await assert.rejects(waitForWindowManager(running, async () => '', {
+    now: () => clock, sleep: async ms => { clock += ms; },
+  }), /timeout after 15000 ms/);
+  assert.equal(clock, 15000);
+});

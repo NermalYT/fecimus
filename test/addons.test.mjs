@@ -50,7 +50,7 @@ test('inspect and installation never execute code; source is independently copie
   const afterRestart = createAddonManager({ dataDir, platform: 'linux' });
   const config = await afterRestart.backendConfig();
   assert.equal(config['addon-hello'].command, process.execPath);
-  assert.equal(config['addon-hello'].args[0], path.join(installed.path, 'side-effect.mjs'));
+  assert.equal(path.normalize(config['addon-hello'].args[0]), path.join(installed.path, 'side-effect.mjs'));
   assert.equal(config['addon-hello'].env.ADDON_ROOT, installed.path);
   assert.equal(config['addon-hello'].env.NODE_PATH_EXAMPLE, process.execPath);
   assert.equal(config['addon-hello'].toolPrefix, 'hello__');
