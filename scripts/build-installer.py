@@ -79,6 +79,8 @@ src/start-browser.mjs
 src/studio-job-guard.py
 src/studio-tools.mjs
 src/version.mjs
+test/godot-integration.mjs
+docs/godot-verification.json
 test/application-paths.test.mjs
 test/browser-output.test.mjs
 test/browser-tools.test.mjs
