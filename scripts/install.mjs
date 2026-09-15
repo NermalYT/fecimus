@@ -20,6 +20,8 @@ export function mergeConfig(config, entry, replaceLegacy = false) {
   if (config.mcpServers !== undefined && (!config.mcpServers || typeof config.mcpServers !== 'object' || Array.isArray(config.mcpServers))) throw new Error('Existing mcpServers must be an object.');
   const servers = { ...config.mcpServers };
   if (replaceLegacy) for (const name of LEGACY_SERVERS) delete servers[name];
+  // Retire the previous registration only when it targets this same service.
+  if (servers.astra?.args?.some(arg => arg === entry.args?.[0])) delete servers.astra;
   servers.fecimus = entry;
   return { ...config, mcpServers: servers };
 }

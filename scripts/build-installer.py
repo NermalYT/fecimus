@@ -96,6 +96,7 @@ test/integration-test.mjs
 test/lifecycle-test.mjs
 test/platform.test.mjs
 test/run.mjs
+test/rebrand.test.mjs
 test/studio-tools.test.mjs
 test/unit.mjs
 test/windows-installer.test.ps1
